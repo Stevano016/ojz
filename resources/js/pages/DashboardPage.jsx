@@ -37,9 +37,42 @@ function StatCard({ label, value, accent, large }) {
     );
 }
 
+async function downloadExcel(path, defaultName) {
+    try {
+        const res = await axios.get(path, { responseType: 'blob' });
+        const blob = res.data;
+        const disp = res.headers['content-disposition'];
+        let name = defaultName;
+        if (disp) {
+            let m = disp.match(/filename\*=(?:UTF-8'')?([^;\n]+)/i);
+            if (m) name = decodeURIComponent(m[1].trim().replace(/^["']|["']$/g, ''));
+            else { m = disp.match(/filename="?([^";\n]+)"?/i); if (m) name = m[1].trim().replace(/^["']|["']$/g, ''); }
+        }
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = name || defaultName;
+        a.click();
+        URL.revokeObjectURL(url);
+    } catch (e) {
+        console.error(e);
+        alert('Gagal mengunduh. Coba lagi.');
+    }
+}
+
 export default function DashboardPage() {
     const [stats, setStats] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [exporting, setExporting] = useState(null);
+
+    const handleExportRekap = () => {
+        setExporting('rekap');
+        downloadExcel('/export/tickets/rekap', 'ozj-rekap.xlsx').finally(() => setExporting(null));
+    };
+    const handleExportPerTicket = () => {
+        setExporting('per-ticket');
+        downloadExcel('/export/tickets/per-ticket', 'ozj-per-ticket.xlsx').finally(() => setExporting(null));
+    };
 
     useEffect(() => {
         const fetchStats = async () => {
@@ -108,6 +141,24 @@ export default function DashboardPage() {
                         Ringkasan status sinyal AI, eskalasi, dan tiket lapangan untuk
                         mendukung keputusan cepat di Youth Care.
                     </p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                    <button
+                        type="button"
+                        onClick={handleExportRekap}
+                        disabled={!!exporting}
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-500/50 bg-emerald-500/10 px-3 py-2 text-xs font-medium text-emerald-300 hover:bg-emerald-500/20 disabled:opacity-50"
+                    >
+                        {exporting === 'rekap' ? '...' : '📥'} Excel Rekap
+                    </button>
+                    <button
+                        type="button"
+                        onClick={handleExportPerTicket}
+                        disabled={!!exporting}
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-sky-500/50 bg-sky-500/10 px-3 py-2 text-xs font-medium text-sky-300 hover:bg-sky-500/20 disabled:opacity-50"
+                    >
+                        {exporting === 'per-ticket' ? '...' : '📥'} Excel Per Tiket
+                    </button>
                 </div>
             </div>
 
