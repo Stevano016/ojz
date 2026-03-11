@@ -1,0 +1,1067 @@
+{
+  "name": "OZJ — AI Signal Intelligence Youth Care (Enhanced)",
+  "nodes": [
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://console.zenziva.net/voice/api/sendvoice/",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {}
+          ]
+        },
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "userkey",
+              "value": "91bc5c32a4b2"
+            },
+            {
+              "name": "passkey",
+              "value": "1662a2aa247413e50c0b5a99"
+            },
+            {
+              "name": "to",
+              "value": "085641029363"
+            },
+            {
+              "name": "message",
+              "value": "=urgent cek  {{ $json.ticket_id }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "a71e430f-26c2-4049-83b0-b328c01f3aef",
+      "name": "HTTP: zenziva Voice Call Alert",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        3168,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "content": "##  WhatsApp + Manual Input Flow",
+        "height": 1020,
+        "width": 3440,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        496,
+        48
+      ],
+      "id": "3c21e783-a64b-4063-ac4b-a7ca475fbfe1",
+      "name": "Sticky: Main"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({status:\"sukses\",ticket_id:$json.ticket_id,urgensi:$json.urgensi_sinyal,skor:$json.skor_urgensi_hukum}) }}",
+        "options": {}
+      },
+      "id": "04ee1986-90c2-41c3-ac34-ff946f413a30",
+      "name": "Respons: Konfirmasi Input",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        3520,
+        432
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.WAHA_API_URL || \"http://localhost:3000\" }}/api/sendText",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"chatId\":\"{{ $json.wa_chat_id || '31612345678@c.us' }}\",\"text\":\"⚠️ *SINYAL OZJ*\\n📋 {{ $json.ticket_id }}\\n📌 {{ $json.judul_sinyal }}\\n🏷️ {{ $json.level_sinyal }}\\n⚡ {{ $json.urgensi_sinyal }}\\n📊 Skor: {{ $json.skor_urgensi_hukum }}/100\\n📝 {{ $json.deskripsi_sinyal }}\",\"session\":\"default\"}",
+        "options": {}
+      },
+      "id": "054e33d5-6942-4c16-8c01-1847fc52ab35",
+      "name": "WAHA: Alert WhatsApp (Sedang)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        3168,
+        496
+      ]
+    },
+    {
+      "parameters": {
+        "sendTo": "stevanowahyu016@gmail.com",
+        "subject": "=[OZJ ALERT] {{ $json.judul_sinyal }} (Skor: {{ $json.skor_urgensi_hukum }})",
+        "message": "=<html><body style=\"font-family:Arial;max-width:600px;margin:auto\"><div style=\"background:#c0392b;color:#fff;padding:20px;border-radius:8px 8px 0 0\"><h2 style=\"margin:0\">SINYAL URGENSI TINGGI</h2><p style=\"margin:6px 0 0;font-size:13px;opacity:.85\">OZJ AI Signal Intelligence</p></div><div style=\"background:#f9f9f9;padding:24px;border:1px solid #ddd\"><p><b>Ticket:</b> {{ $json.ticket_id }}</p><p><b>Judul:</b> {{ $json.judul_sinyal }}</p><p><b>Level:</b> {{ $json.level_sinyal }} | <b>Skor:</b> {{ $json.skor_urgensi_hukum }}/100</p><p><b>Deskripsi:</b> {{ $json.deskripsi_sinyal }}</p><p><b>Risiko:</b> {{ $json.risiko_teridentifikasi }}</p><p><b>Rekomendasi:</b> {{ $json.rekomendasi_ai }}</p></div><div style=\"background:#ecf0f1;padding:12px;text-align:center;font-size:11px;color:#7f8c8d;border-radius:0 0 8px 8px\">Dikirim otomatis pada {{ $json.waktu_catat }}</div></body></html>",
+        "options": {}
+      },
+      "id": "9fa61a99-2f8a-46bb-8acb-1125c8ebec78",
+      "name": "Gmail: Alert Urgensi Tinggi",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2,
+      "position": [
+        3152,
+        288
+      ],
+      "webhookId": "cd323780-7e8d-4bd3-8ea6-8039042f5e32",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "5nzf5fzC75IkZhcE",
+          "name": "Gmail account Aiguide"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "dataType": "string",
+        "value1": "={{ $json._route }}",
+        "rules": {
+          "rules": [
+            {
+              "value2": "kritis_voice_call"
+            },
+            {
+              "value2": "tinggi_whatsapp",
+              "output": 1
+            },
+            {
+              "value2": "sedang_whatsapp",
+              "output": 1
+            }
+          ]
+        },
+        "fallbackOutput": 2
+      },
+      "id": "f9dcbafb-1125-4011-bcb5-c5c1adc6359d",
+      "name": "Switch: Urgensi [0] VoiceCall | [1] WA | [2] Log",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 1,
+      "position": [
+        2784,
+        368
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "const skor = parseInt($json.skor_urgensi_hukum) || 0;\nconst u    = ($json.urgensi_sinyal || '').trim();\nconst lang = ($json.bahasa_output  || 'en').toLowerCase();\n\n// ── Label urgensi per bahasa ─────────────────────────────────────────────────\nconst LABEL_TINGGI  = { id: 'Tinggi',    en: 'High',   nl: 'Hoog'      };\nconst LABEL_SEDANG  = { id: 'Sedang',    en: 'Medium', nl: 'Gemiddeld' };\nconst LABEL_RENDAH  = { id: 'Rendah',    en: 'Low',    nl: 'Laag'      };\n\nconst isTinggi = skor >= 90\n  || u === LABEL_TINGGI.id\n  || u === LABEL_TINGGI.en\n  || u === LABEL_TINGGI.nl;\n\nconst isSedang = !isTinggi && (\n     skor >= 70\n  || skor >= 50\n  || u === LABEL_SEDANG.id\n  || u === LABEL_SEDANG.en\n  || u === LABEL_SEDANG.nl\n);\n\n// ── Routing ──────────────────────────────────────────────────────────────────\nlet route, channel, sla_jam;\n\nif (skor >= 90 || isTinggi) {\n  route   = 'kritis_voice_call';   // akut → telepon langsung\n  channel = 'voice_call';\n  sla_jam = 24;\n} else if (skor >= 70 || isSedang) {\n  route   = 'tinggi_whatsapp';     // Meldcode terpicu → WhatsApp\n  channel = 'whatsapp';\n  sla_jam = 48;\n} else if (skor >= 50) {\n  route   = 'sedang_whatsapp';     // risiko sedang → WhatsApp\n  channel = 'whatsapp';\n  sla_jam = 168;                   // 1 minggu\n} else {\n  route   = 'rendah_dossier';      // informatif → catat saja\n  channel = 'dossier';\n  sla_jam = null;\n}\n\n// ── Deadline eskalasi (ISO string, null jika tidak berlaku) ──────────────────\nconst waktu_eskalasi = sla_jam !== null\n  ? new Date(Date.now() + sla_jam * 3600 * 1000).toISOString()\n  : '';\n\nreturn [{\n  json: {\n    ...$json,\n    skor_urgensi_hukum : skor,\n    _route             : route,\n    _channel           : channel,\n    _sla_jam           : sla_jam,\n    waktu_eskalasi     : waktu_eskalasi || $json.waktu_eskalasi || ''\n  }\n}];"
+      },
+      "id": "7c0502b2-8492-4e5d-b746-4e5a92528704",
+      "name": "Fungsi: Routing Skor Hukum",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        2560,
+        368
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "=https://docs.google.com/spreadsheets/d/1SmLv-fLtv2-nqUhzFOfjJsmRttOcY6eXtl0Nu5n11q4/edit?gid=0#gid=0",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "A1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1SmLv-fLtv2-nqUhzFOfjJsmRttOcY6eXtl0Nu5n11q4/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "ringkasan_sinyal",
+              "displayName": "ringkasan_sinyal",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "judul_sinyal",
+              "displayName": "judul_sinyal",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "deskripsi_sinyal",
+              "displayName": "deskripsi_sinyal",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "level_sinyal",
+              "displayName": "level_sinyal",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "urgensi_sinyal",
+              "displayName": "urgensi_sinyal",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "kategori_sinyal",
+              "displayName": "kategori_sinyal",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "nama_program",
+              "displayName": "nama_program",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "nama_pelapor",
+              "displayName": "nama_pelapor",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "nama_lokasi",
+              "displayName": "nama_lokasi",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "risiko_teridentifikasi",
+              "displayName": "risiko_teridentifikasi",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "rekomendasi_ai",
+              "displayName": "rekomendasi_ai",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "jenis_sumber",
+              "displayName": "jenis_sumber",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "waktu_catat",
+              "displayName": "waktu_catat",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "ticket_id",
+              "displayName": "ticket_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "wa_chat_id",
+              "displayName": "wa_chat_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "status_ticket",
+              "displayName": "status_ticket",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "status_eskalasi",
+              "displayName": "status_eskalasi",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "waktu_eskalasi",
+              "displayName": "waktu_eskalasi",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "rekomendasi_keputusan",
+              "displayName": "rekomendasi_keputusan",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "skor_urgensi_hukum",
+              "displayName": "skor_urgensi_hukum",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "dasar_hukum",
+              "displayName": "dasar_hukum",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "8be2ed7d-34fa-4462-b431-37bbf39aafc4",
+      "name": "Sheets: Simpan Sinyal",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [
+        2336,
+        368
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "aeCUMk2aKMbOTDkY",
+          "name": "Google Sheets account Aiguide"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "functionCode": "const d = items[0].json;\nconst sinyals = d.sinyal || [];\n\n// ── Ambil metadata: prioritas metadata_kasus dari AI, lalu fallback ke node input ──\nlet meta = {};\n\n// Layer 1: metadata_kasus yang sudah di-parse AI (dari prompt baru)\nif (typeof d.metadata_kasus === 'object' && d.metadata_kasus !== null) {\n  meta = { ...d.metadata_kasus };\n}\n\n// Layer 2: fallback ke node input manual / WhatsApp (isi field yang masih kosong)\nlet metaNode = {};\ntry { metaNode = $('Fungsi: Validasi Input Manual').first().json; } catch(e) {}\ntry { if (!metaNode.nama_pelapor) metaNode = $('Fungsi: Validasi Input WhatsApp').first().json; } catch(e) {}\n\n// Merge: metadata_kasus dari AI diutamakan, node input sebagai fallback\nconst nama_pengirim    = meta.nama_pengirim     || metaNode.nama_pelapor   || 'Anonim';\nconst nomor_pengirim   = meta.nomor_pengirim    || metaNode.wa_chat_id     || '';\nconst nama_program     = meta.program           || metaNode.nama_program   || '';\nconst nama_lokasi      = meta.lokasi            || metaNode.nama_lokasi    || '';\nconst level_laporan    = meta.level_laporan     || metaNode.level_laporan  || '';\nconst urgensi_awal     = meta.urgensi_awal      || metaNode.urgensi_laporan|| '';\nconst timestamp_ai     = meta.timestamp_laporan || '';\nconst jenis_sumber     = metaNode.jenis_sumber  || (nomor_pengirim ? 'whatsapp' : 'input-manual');\nconst wa_chat_id       = metaNode.wa_chat_id    || nomor_pengirim || '';\n\n// ── Generate ticket ID ───────────────────────────────────────────────────────\nconst td = new Date().toISOString().slice(0, 10).replace(/-/g, '');\nconst tr = Math.floor(Math.random() * 9000 + 1000);\n\n// ── Hitung skor urgensi tertinggi dari semua sinyal ──────────────────────────\nconst maxSkor = sinyals.length > 0\n  ? Math.max(...sinyals.map(s => typeof s.skor_urgensi_hukum === 'number' ? s.skor_urgensi_hukum : 0))\n  : 0;\n\n// Tentukan status eskalasi otomatis berdasarkan skor tertinggi\nconst status_eskalasi = maxSkor >= 90 ? 'KRITIS'\n  : maxSkor >= 70 ? 'Tinggi'\n  : maxSkor >= 50 ? 'Sedang'\n  : 'Normal';\n\n// ── Base ticket fields ───────────────────────────────────────────────────────\nconst base = {\n  ticket_id               : 'OZJ-' + td + '-' + tr,\n  bahasa_output           : d.bahasa_output       || 'en',\n  ringkasan_sinyal        : d.ringkasan            || '',\n  risiko_teridentifikasi  : Array.isArray(d.risiko)      ? d.risiko.join('; ')      : '',\n  rekomendasi_ai          : Array.isArray(d.rekomendasi) ? d.rekomendasi.join('; ') : '',\n  // Identitas pelapor\n  nama_pengirim           : nama_pengirim,\n  nomor_pengirim          : nomor_pengirim,\n  nama_program            : nama_program,\n  nama_lokasi             : nama_lokasi,\n  level_laporan           : level_laporan,\n  urgensi_awal            : urgensi_awal,\n  timestamp_laporan_ai    : timestamp_ai,\n  jenis_sumber            : jenis_sumber,\n  wa_chat_id              : wa_chat_id,\n  // Ticket status\n  waktu_catat             : new Date().toISOString(),\n  status_ticket           : 'Open',\n  status_eskalasi         : status_eskalasi,\n  skor_urgensi_tertinggi  : maxSkor,\n  waktu_eskalasi          : '',\n  rekomendasi_keputusan   : ''\n};\n\n// ── Helper: flatten rekomendasi_respons jadi field datar ────────────────────\nfunction flattenRR(rr) {\n  const safe = (typeof rr === 'object' && rr !== null) ? rr : {};\n  return {\n    rr_tenggat_waktu        : safe.tenggat_waktu        || '',\n    rr_tindakan_utama       : safe.tindakan_utama       || '',\n    rr_pihak_yang_dihubungi : safe.pihak_yang_dihubungi || '',\n    rr_langkah_dokumentasi  : safe.langkah_dokumentasi  || ''\n  };\n}\n\n// ── Fallback jika tidak ada sinyal ──────────────────────────────────────────\nif (sinyals.length === 0) {\n  return [{\n    json: {\n      ...base,\n      judul_sinyal       : 'Tidak ada sinyal terdeteksi',\n      deskripsi_sinyal   : '',\n      level_sinyal       : '',\n      urgensi_sinyal     : '',\n      kategori_sinyal    : '',\n      skor_urgensi_hukum : 0,\n      dasar_hukum        : '',\n      sinyal_index       : 0,\n      sinyal_total       : 0,\n      ...flattenRR({})\n    }\n  }];\n}\n\n// ── Map setiap sinyal jadi satu ticket row ───────────────────────────────────\nreturn sinyals.map((s, i) => ({\n  json: {\n    ...base,\n    ticket_id          : base.ticket_id + (i > 0 ? '-' + (i + 1) : ''),\n    sinyal_index       : i + 1,\n    sinyal_total       : sinyals.length,\n    judul_sinyal       : s.judul              || `Sinyal ${i + 1}`,\n    deskripsi_sinyal   : s.deskripsi          || '',\n    level_sinyal       : s.level              || '',\n    urgensi_sinyal     : s.urgensi            || '',\n    kategori_sinyal    : s.kategori           || '',\n    skor_urgensi_hukum : typeof s.skor_urgensi_hukum === 'number' ? s.skor_urgensi_hukum : 0,\n    dasar_hukum        : s.dasar_hukum        || '',\n    ...flattenRR(s.rekomendasi_respons)\n  }\n}));"
+      },
+      "id": "37a46fce-97f4-4046-b67d-54ce0028d007",
+      "name": "Fungsi: Flatten Sinyal",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        2112,
+        368
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "let raw = '';\n\n// ── Layer 1: standard $json.text ────────────────────────────────────────────\nif (typeof $json.text === 'string' && $json.text.length > 0) {\n  raw = $json.text;\n}\n// ── Layer 2: candidates array (Gemini REST API) ──────────────────────────────\nelse if (Array.isArray($json) && $json[0]?.content?.parts) {\n  raw = $json[0].content.parts.map(p => p.text || '').join('');\n}\nelse if ($json.candidates && Array.isArray($json.candidates)) {\n  const parts = $json.candidates[0]?.content?.parts || [];\n  raw = parts.map(p => p.text || '').join('');\n}\n// ── Layer 3: content.parts direct ───────────────────────────────────────────\nelse if ($json.content?.parts) {\n  raw = $json.content.parts.map(p => p.text || '').join('');\n}\n// ── Layer 4: Claude / OpenAI format ─────────────────────────────────────────\nelse if (Array.isArray($json.content) && $json.content[0]?.text) {\n  raw = $json.content.map(c => c.text || '').join('');\n}\nelse if ($json.choices && Array.isArray($json.choices)) {\n  raw = $json.choices[0]?.message?.content || $json.choices[0]?.text || '';\n}\n// ── Layer 5: generic output/response fields ──────────────────────────────────\nelse if (typeof $json.output   === 'string') { raw = $json.output; }\nelse if (typeof $json.response === 'string') { raw = $json.response; }\nelse if (typeof $json.message  === 'string') { raw = $json.message; }\n// ── Layer 6: fallback via items[0] ───────────────────────────────────────────\nelse {\n  try {\n    const firstItem = items[0].json;\n    if (firstItem.content?.parts) {\n      raw = firstItem.content.parts.map(p => p.text || '').join('');\n    } else if (Array.isArray(firstItem.content) && firstItem.content[0]?.text) {\n      raw = firstItem.content.map(c => c.text || '').join('');\n    } else if (typeof firstItem.text === 'string') {\n      raw = firstItem.text;\n    } else if (typeof firstItem.output === 'string') {\n      raw = firstItem.output;\n    }\n  } catch(ex) { /* silent fallback */ }\n}\n\n// ── Clean markdown fences ────────────────────────────────────────────────────\nconst cleaned = raw\n  .replace(/```json\\s*/gi, '')\n  .replace(/```\\s*/g, '')\n  .replace(/^\\s*`+|`+\\s*$/g, '')   // inline backticks sisa\n  .trim();\n\n// ── Parse JSON ───────────────────────────────────────────────────────────────\nlet result;\ntry {\n  const jsonStart = cleaned.indexOf('{');\n  const jsonEnd   = cleaned.lastIndexOf('}');\n  if (jsonStart === -1 || jsonEnd <= jsonStart) {\n    throw new Error('Tidak ditemukan JSON object yang valid dalam response');\n  }\n  const jsonStr = cleaned.substring(jsonStart, jsonEnd + 1);\n  result = JSON.parse(jsonStr);\n\n  if (typeof result !== 'object' || result === null || Array.isArray(result)) {\n    throw new Error('Result bukan object JSON');\n  }\n\n  // ── Validasi bahasa_output ───────────────────────────────────────────────\n  const VALID_LANG = ['id', 'en', 'nl'];\n  result.bahasa_output = VALID_LANG.includes(result.bahasa_output)\n    ? result.bahasa_output\n    : 'en';\n\n  // ── Normalisasi metadata_kasus (field BARU) ──────────────────────────────\n  const mk = (typeof result.metadata_kasus === 'object' && result.metadata_kasus !== null)\n    ? result.metadata_kasus\n    : {};\n  result.metadata_kasus = {\n    nama_pengirim    : mk.nama_pengirim     || '',\n    nomor_pengirim   : mk.nomor_pengirim    || '',\n    timestamp_laporan: mk.timestamp_laporan || '',\n    program          : mk.program           || '',\n    lokasi           : mk.lokasi            || '',\n    level_laporan    : mk.level_laporan     || '',\n    urgensi_awal     : mk.urgensi_awal      || ''\n  };\n\n  // ── Normalisasi field utama ──────────────────────────────────────────────\n  result.ringkasan   = typeof result.ringkasan === 'string' ? result.ringkasan : '';\n  result.risiko      = Array.isArray(result.risiko)         ? result.risiko      : [];\n  result.rekomendasi = Array.isArray(result.rekomendasi)    ? result.rekomendasi : [];\n\n  // ── Normalisasi sinyal + rekomendasi_respons ─────────────────────────────\n  result.sinyal = Array.isArray(result.sinyal)\n    ? result.sinyal.map((s, idx) => {\n        if (typeof s !== 'object' || s === null) return null;\n        const rr = (typeof s.rekomendasi_respons === 'object' && s.rekomendasi_respons !== null)\n          ? s.rekomendasi_respons\n          : {};\n        const skor = typeof s.skor_urgensi_hukum === 'number'\n          ? Math.min(100, Math.max(0, s.skor_urgensi_hukum))  // clamp 0–100\n          : 0;\n        return {\n          judul               : s.judul      || `Sinyal ${idx + 1}`,\n          deskripsi           : s.deskripsi  || '',\n          level               : s.level      || '',\n          urgensi             : s.urgensi    || '',\n          kategori            : s.kategori   || '',\n          skor_urgensi_hukum  : skor,\n          dasar_hukum         : s.dasar_hukum || '',\n          rekomendasi_respons : {\n            tenggat_waktu        : rr.tenggat_waktu        || '',\n            tindakan_utama       : rr.tindakan_utama       || '',\n            pihak_yang_dihubungi : rr.pihak_yang_dihubungi || '',\n            langkah_dokumentasi  : rr.langkah_dokumentasi  || ''\n          }\n        };\n      })\n      .filter(Boolean)   // buang entry null\n    : [];\n\n} catch(e) {\n  result = {\n    bahasa_output : 'en',\n    metadata_kasus: {\n      nama_pengirim    : '',\n      nomor_pengirim   : '',\n      timestamp_laporan: '',\n      program          : '',\n      lokasi           : '',\n      level_laporan    : '',\n      urgensi_awal     : ''\n    },\n    ringkasan     : `Parse gagal: ${e.message}. Raw (300 char): ${raw.substring(0, 300)}`,\n    sinyal        : [],\n    risiko        : [],\n    rekomendasi   : [],\n    _parse_error  : e.message,\n    _raw_snippet  : raw.substring(0, 500),\n    _raw_length   : raw.length\n  };\n}\n\nreturn [{ json: result }];"
+      },
+      "id": "245b12e6-85d7-4595-b86d-51904837cdd8",
+      "name": "Fungsi: Parse JSON Sinyal",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        1920,
+        368
+      ]
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-flash-lite",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-flash-lite"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=PERAN: Kamu adalah analis intelijen kebijakan layanan anak (youth care) di Belanda dengan pengalaman 10+ tahun untuk OZJ.\n\nSUMBER DATA INPUT:\n- Teks observasi: {{ $json.payload.body }}\n- Nama pengirim: {{ $json.payload._data.notifyName }}\n- Nomor pengirim: {{ $json.payload.from }}\n- Timestamp: {{ $json.payload.timestamp }}\n- Program: {{ $json.nama_program }}\n- Lokasi: {{ $json.nama_lokasi }}\n- Level laporan: {{ $json.level_laporan }}\n- Urgensi laporan awal: {{ $json.urgensi_laporan }}\n\nDETEKSI BAHASA:\n- Deteksi bahasa dari teks observasi secara otomatis\n- Bahasa yang didukung: Bahasa Indonesia (id), English (en), Nederlands (nl)\n- Jika bahasa tidak terdeteksi atau di luar 3 bahasa ini, gunakan English sebagai fallback\n- Seluruh nilai dalam JSON output HARUS menggunakan bahasa yang sama dengan input\n- Istilah hukum Belanda (Jeugdwet, Meldcode, Veilig Thuis, OTS, UHP, dll) TETAP dalam bahasa Belanda di semua output karena merupakan nama resmi\n\nPANDUAN TERJEMAHAN PER BAHASA:\n[Indonesia] ringkasan, deskripsi, tindakan, rekomendasi → Bahasa Indonesia | label level tetap: Mikro/Meso/Makro | urgensi: Rendah/Sedang/Tinggi\n[English]   ringkasan→summary, sinyal→signals, urgensi→urgency | level: Micro/Meso/Macro | urgency: Low/Medium/High\n[Nederlands] ringkasan→samenvatting, sinyal→signalen, urgensi→urgentie | level: Micro/Meso/Macro | urgentie: Laag/Gemiddeld/Hoog\n\nKERANGKA LEVEL (Klasifikasi Tiga Level):\n- Mikro: masalah level INDIVIDU/KELUARGA — kasus spesifik anak, pengalaman langsung profesional\n- Meso: masalah level ORGANISASI/REGIONAL — kolaborasi antar lembaga, kapasitas provider, jaringan regional\n- Makro: masalah level SISTEM/KEBIJAKAN — pola sistemik, legislasi Jeugdwet, pendanaan nasional\n\nKERANGKA HUKUM BELANDA (scoring urgensi):\n- Jeugdwet Art. 2.4: Gemeente wajib menyediakan jeugdhulp tepat waktu\n- Jeugdwet Art. 4.1.1: Meldcode — kewajiban profesional melaporkan kekerasan/verwaarlozing\n- Veilig Thuis: Acute gevaar vs structureel gevaar\n- UNCRC Art. 3: Kepentingan terbaik anak\n- Wet verplichte meldcode: Protokol 5 langkah pelaporan\n\nKATA KUNCI URGENSI TINGGI: kindermishandeling, verwaarlozing, huiselijk geweld, acute, spoed, OTS, UHP, uithuisplaatsing, seksueel misbruik, suicide, zelfbeschadiging\n\nINSTRUKSI:\n1. Deteksi bahasa input dari teks observasi, simpan kode bahasa di field \"bahasa_output\"\n2. Ekstrak dan sertakan metadata pengirim (nama, nomor, waktu) di field \"metadata_kasus\"\n3. Identifikasi sinyal kebijakan dari teks observasi\n4. Tentukan skor_urgensi_hukum (0-100): 90-100=bahaya akut anak, 70-89=Meldcode terpicu, 50-69=risiko sedang, 0-49=informatif\n5. Untuk setiap sinyal, tentukan rekomendasi_respons berdasarkan skor_urgensi_hukum:\n   - 90-100: tindakan segera dalam 24 jam (kontak Veilig Thuis/politie, aktivasi protokol darurat)\n   - 70-89: tindakan dalam 48-72 jam (Meldcode stap 4-5, konsultasi intern, dokumentasi)\n   - 50-69: tindakan dalam 1-2 minggu (monitoring, koordinasi tim, evaluasi berkala)\n   - 0-49: tindakan rutin/informatif (catat dalam dossier, agenda evaluasi reguler)\n6. Tulis SEMUA nilai teks dalam JSON menggunakan bahasa yang terdeteksi, kecuali istilah hukum Belanda resmi\n7. Kembalikan HANYA JSON valid tanpa markdown/backtick\n\nFORMAT (field names tetap dalam bahasa Inggris sebagai key JSON, hanya VALUE yang diterjemahkan):\n{\n  \"bahasa_output\": \"id|en|nl\",\n  \"metadata_kasus\": {\n    \"nama_pengirim\": \"\",\n    \"nomor_pengirim\": \"\",\n    \"timestamp_laporan\": \"\",\n    \"program\": \"\",\n    \"lokasi\": \"\",\n    \"level_laporan\": \"\",\n    \"urgensi_awal\": \"\"\n  },\n  \"ringkasan\": \"\",\n  \"sinyal\": [\n    {\n      \"judul\": \"\",\n      \"deskripsi\": \"\",\n      \"level\": \"Mikro|Meso|Makro / Micro|Meso|Macro\",\n      \"urgensi\": \"Rendah|Sedang|Tinggi / Low|Medium|High / Laag|Gemiddeld|Hoog\",\n      \"kategori\": \"\",\n      \"skor_urgensi_hukum\": 0,\n      \"dasar_hukum\": \"\",\n      \"rekomendasi_respons\": {\n        \"tenggat_waktu\": \"\",\n        \"tindakan_utama\": \"\",\n        \"pihak_yang_dihubungi\": \"\",\n        \"langkah_dokumentasi\": \"\"\n      }\n    }\n  ],\n  \"risiko\": [],\n  \"rekomendasi\": []\n}"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {
+          "maxOutputTokens": 2048,
+          "temperature": 0.2
+        }
+      },
+      "id": "8a14753c-f3f5-4866-a543-95892ebb99d4",
+      "name": "Gemini: Ekstraksi Sinyal dari Observasi",
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        1616,
+        368
+      ],
+      "credentials": {
+        "googlePalmApi": {
+          "id": "q45VNba3ZoiWmL8x",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "ozj-log-signal",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "f33aade9-28dd-42b6-b54c-fd570ae73f73",
+      "name": "Webhook: Input Manual Sinyal",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        944,
+        480
+      ],
+      "webhookId": "ozj-signal-log-manual-001"
+    },
+    {
+      "parameters": {},
+      "type": "@devlikeapro/n8n-nodes-waha.wahaTrigger",
+      "typeVersion": 202502,
+      "position": [
+        608,
+        160
+      ],
+      "id": "cfb53741-a8c0-404a-b77a-583a20cc0720",
+      "name": "WAHA Trigger",
+      "webhookId": "9621b3ae-83da-48a2-95ac-bc50ecfe8e50"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours"
+            }
+          ]
+        }
+      },
+      "id": "1fb5d41a-00bf-43bf-bcfc-4202be7447cb",
+      "name": "Jadwal: Ringkasan Harian (18:00)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        544,
+        1872
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "=https://docs.google.com/spreadsheets/d/1SmLv-fLtv2-nqUhzFOfjJsmRttOcY6eXtl0Nu5n11q4/edit?gid=0#gid=0",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "A1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1SmLv-fLtv2-nqUhzFOfjJsmRttOcY6eXtl0Nu5n11q4/edit#gid=0"
+        },
+        "options": {}
+      },
+      "id": "e4f21b89-c0a7-4bb4-9065-b37a7ff4d5e3",
+      "name": "Sheets: Baca Harian",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [
+        768,
+        1872
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "aeCUMk2aKMbOTDkY",
+          "name": "Google Sheets account Aiguide"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "functionCode": "const now     = new Date();\nconst todayStr = now.toISOString().slice(0, 10); // \"2026-03-10\"\n\n// ── Helper: normalize tanggal ke YYYY-MM-DD ──────────────────────────────────\nfunction toDateStr(str) {\n  if (!str) return '';\n  return String(str).trim().replace(' ', 'T').slice(0, 10);\n}\n\n// ── Helper: normalize level sinyal ke Mikro/Meso/Makro ──────────────────────\nfunction normalizeLevel(v) {\n  const map = {\n    'mikro'  : 'Mikro', 'micro'  : 'Mikro',\n    'meso'   : 'Meso',  'medium' : 'Meso',\n    'makro'  : 'Makro', 'macro'  : 'Makro'\n  };\n  return map[(v || '').toLowerCase()] || v || '—';\n}\n\n// ── Helper: normalize urgensi ke Rendah/Sedang/Tinggi ───────────────────────\nfunction normalizeUrgensi(v) {\n  const map = {\n    'rendah'    : 'Rendah', 'low'  : 'Rendah', 'laag'      : 'Rendah',\n    'sedang'    : 'Sedang', 'medium': 'Sedang', 'gemiddeld' : 'Sedang',\n    'tinggi'    : 'Tinggi', 'high' : 'Tinggi', 'hoog'      : 'Tinggi'\n  };\n  return map[(v || '').toLowerCase()] || v || '—';\n}\n\n// ── Filter: hanya tiket hari ini yang valid (punya ticket_id & status_ticket) ─\nconst today = items.filter(i => {\n  const d = i.json;\n  if (!d.ticket_id || !d.status_ticket) return false;          // skip row tidak lengkap\n  if (d.judul_sinyal === 'Tidak ada sinyal') return false;      // skip parse gagal\n  return toDateStr(d.waktu_catat) === todayStr;\n});\n\n// ── Hitung statistik ─────────────────────────────────────────────────────────\nlet mikro = 0, meso = 0, makro = 0;\nlet rendah = 0, sedang = 0, tinggi = 0;\nlet eskalasi = 0, open = 0;\n\ntoday.forEach(i => {\n  const d       = i.json;\n  const level   = normalizeLevel(d.level_sinyal);\n  const urgensi = normalizeUrgensi(d.urgensi_sinyal);\n\n  if (level   === 'Mikro')  mikro++;\n  if (level   === 'Meso')   meso++;\n  if (level   === 'Makro')  makro++;\n  if (urgensi === 'Rendah') rendah++;\n  if (urgensi === 'Sedang') sedang++;\n  if (urgensi === 'Tinggi') tinggi++;\n\n  if (d.status_ticket   === 'Open')      open++;\n  if (d.status_eskalasi === 'Escalated'\n   || d.status_eskalasi === 'Tinggi'\n   || d.status_eskalasi === 'KRITIS')    eskalasi++;\n});\n\n// ── Buat teks konteks untuk AI summary ──────────────────────────────────────\nconst teks_konteks = today\n  .filter(i => i.json.judul_sinyal)\n  .map(i => {\n    const d       = i.json;\n    const level   = normalizeLevel(d.level_sinyal);\n    const urgensi = normalizeUrgensi(d.urgensi_sinyal);\n    const skor    = d.skor_urgensi_hukum || 0;\n    const hukum   = d.dasar_hukum ? ` | ${d.dasar_hukum}` : '';\n    return `[${level}][${urgensi}][${skor}/100] ${d.judul_sinyal}: ${d.deskripsi_sinyal || '—'}${hukum}`;\n  })\n  .join('\\n');\n\n// ── Sumber breakdown ─────────────────────────────────────────────────────────\nconst dari_wa     = today.filter(i => i.json.jenis_sumber === 'whatsapp').length;\nconst dari_manual = today.filter(i => i.json.jenis_sumber === 'input-manual').length;\n\nreturn [{\n  json: {\n    tanggal       : todayStr,\n    total         : today.length,\n    // Level\n    mikro, meso, makro,\n    // Urgensi\n    rendah, sedang, tinggi,\n    // Status\n    open, eskalasi,\n    // Sumber\n    dari_wa, dari_manual,\n    // Untuk AI\n    teks_konteks\n  }\n}];"
+      },
+      "id": "50877937-29b5-4030-8198-00d58af67096",
+      "name": "Fungsi: Metrik Harian",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        992,
+        1872
+      ]
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-flash-lite",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-flash-lite"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Kamu adalah analis intelijen kebijakan layanan anak (youth care) di Belanda untuk OZJ.\n\nBerikut ringkasan sinyal hari ini ({{ $json.tanggal }}):\n\nSTATISTIK:\nTotal={{ $json.total }} | Tinggi={{ $json.tinggi }} | Sedang={{ $json.sedang }} | Rendah={{ $json.rendah }}\nMikro={{ $json.mikro }} | Meso={{ $json.meso }} | Makro={{ $json.makro }}\nEskalasi={{ $json.eskalasi }} | WA={{ $json.dari_wa }} | Manual={{ $json.dari_manual }}\n\nSINYAL:\n{{ $json.teks_konteks }}\n\nTUGAS: Buat laporan harian SINGKAT dalam Bahasa Indonesia, maksimal 800 karakter, dengan struktur:\n\n🗓 *{{ $json.tanggal }}* | Total: {{ $json.total }} sinyal\n\n⚠️ *Prioritas:*\n[sebutkan maks 2 sinyal paling kritis, satu baris per sinyal]\n\n✅ *Tindakan:*\n[maks 2 tindakan konkret, satu baris per tindakan]\n\n🔴 *Urgensi keseluruhan: [Rendah/Sedang/Tinggi/Kritis]*\n\nATURAN:\n- Maksimal 800 karakter total\n- Istilah Belanda tetap asli (Jeugdwet, Meldcode, Veilig Thuis, dll)\n- Tidak ada markdown **bold**, gunakan *italic* WhatsApp saja\n- Tidak ada bullet panjang, satu baris per poin\n- Langsung isi tanpa pembuka/penutup"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {
+          "maxOutputTokens": 1024,
+          "temperature": 0.3
+        }
+      },
+      "id": "b517af33-7415-43dd-a572-d5e50f9ded0d",
+      "name": "Gemini: Ringkasan Harian",
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        1184,
+        1872
+      ],
+      "credentials": {
+        "googlePalmApi": {
+          "id": "q45VNba3ZoiWmL8x",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "##  Daily Summary 18:00 via WhatsApp",
+        "height": 300,
+        "width": 1200,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        496,
+        1776
+      ],
+      "id": "6417aa74-883a-47ea-885c-30e2dac40587",
+      "name": "Sticky: Daily"
+    },
+    {
+      "parameters": {
+        "resource": "Chatting",
+        "operation": "Send Text",
+        "session": "=vano",
+        "chatId": "=6285641029363@c.us",
+        "text": "={{ $json.content.parts[0].text }}",
+        "requestOptions": {}
+      },
+      "type": "@devlikeapro/n8n-nodes-waha.WAHA",
+      "typeVersion": 202502,
+      "position": [
+        1536,
+        1872
+      ],
+      "id": "690c8a32-f06b-4159-9df8-702073c690a0",
+      "name": "Send a text message1",
+      "credentials": {
+        "wahaApi": {
+          "id": "4HTz9dpfphr9Kstl",
+          "name": "WAHA account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://console.zenziva.net/voice/api/sendvoice/",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {}
+          ]
+        },
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "userkey",
+              "value": "91bc5c32a4b2"
+            },
+            {
+              "name": "passkey",
+              "value": "1662a2aa247413e50c0b5a99"
+            },
+            {
+              "name": "to",
+              "value": "085641029363"
+            },
+            {
+              "name": "message",
+              "value": "=urgent cek  {{ $json.ticket_id }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "c10e1fdb-91d5-4898-a76d-621b063a2a0c",
+      "name": "HTTP: zenziva Voice Call Alert1",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        1520,
+        1520
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "Chatting",
+        "operation": "Send Text",
+        "requestOptions": {}
+      },
+      "type": "@devlikeapro/n8n-nodes-waha.WAHA",
+      "typeVersion": 202502,
+      "position": [
+        1376,
+        1392
+      ],
+      "id": "6d1ce201-957a-41c7-abc7-12a24e4b1125",
+      "name": "Send a text message",
+      "credentials": {
+        "wahaApi": {
+          "id": "4HTz9dpfphr9Kstl",
+          "name": "WAHA account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "##  SLA Escalation (30 min)",
+        "height": 400,
+        "width": 1200,
+        "color": 2
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        496,
+        1376
+      ],
+      "id": "5f77730b-a4df-4982-9223-bdba53d1d2b8",
+      "name": "Sticky: SLA"
+    },
+    {
+      "parameters": {
+        "sendTo": "stevanowahyu016@gmail.com",
+        "subject": "={{ $json._skip ? '[OZJ] Cek SLA: ' + $json._total_items + ' tiket diperiksa, tidak ada breach' : '[OZJ ' + ($json.status_eskalasi || 'ESKALASI').toUpperCase() + '] ' + ($json.urgensi_sinyal || 'N/A') + ' — ' + ($json.judul_sinyal || 'Tanpa judul') + ' | ' + ($json.nama_lokasi || '-') }}",
+        "message": "=<html>\n<body style=\"font-family:Arial,sans-serif;max-width:600px;margin:auto;background:#f0f2f5;padding:20px\">\n\n  <!-- Header: hijau jika _skip, merah jika eskalasi -->\n  <div style=\"background:{{ $json._skip ? '#27ae60' : ($json.skor_urgensi_hukum >= 90 ? '#c0392b' : $json.skor_urgensi_hukum >= 70 ? '#e74c3c' : '#e67e22') }};color:#fff;padding:20px 24px;border-radius:8px 8px 0 0\">\n    <p style=\"margin:0 0 4px 0;font-size:12px;opacity:0.85;letter-spacing:1px\">OZJ YOUTH CARE — {{ $json._skip ? 'CEK SLA RUTIN' : 'NOTIFIKASI ESKALASI' }}</p>\n    <h2 style=\"margin:0;font-size:20px\">{{ $json._skip ? '✅ Tidak Ada SLA Breach' : '⚠️ SLA Terlampaui: ' + ($json.urgensi_sinyal || 'N/A') }}</h2>\n    <p style=\"margin:6px 0 0 0;font-size:13px;opacity:0.9\">{{ $json._skip ? ('Diperiksa: ' + $json._checked_at) : (($json.ticket_id || '—') + ' · ' + ($json.nama_lokasi || '-')) }}</p>\n  </div>\n\n  <!-- Body -->\n  <div style=\"background:#fff;padding:24px;border:1px solid #ddd;border-top:none\">\n\n    <!-- MODE: _skip → ringkasan cek rutin -->\n    <div style=\"display:{{ $json._skip ? 'block' : 'none' }}\">\n      <p style=\"font-size:13px;color:#555\">Total tiket diperiksa: <b>{{ $json._total_items || 0 }}</b></p>\n      <p style=\"font-size:13px;color:#555;margin-bottom:8px\">Status tiket:</p>\n      <ul style=\"font-size:12px;color:#777;margin:0;padding-left:20px\">\n        {{ ($json._skipped_ids || []).map(id => \"<li style='padding:3px 0'>\" + id + \"</li>\").join('') }}\n      </ul>\n    </div>\n\n    <!-- MODE: eskalasi → detail sinyal -->\n    <div style=\"display:{{ $json._skip ? 'none' : 'block' }}\">\n\n      <table style=\"width:100%;border-collapse:collapse;margin-bottom:20px\">\n        <tr style=\"background:#fdf3f3\">\n          <td style=\"padding:10px 12px;font-size:13px;color:#666;width:40%\">Judul Sinyal</td>\n          <td style=\"padding:10px 12px;font-size:14px;font-weight:bold;color:#222\">{{ $json.judul_sinyal || '—' }}</td>\n        </tr>\n        <tr>\n          <td style=\"padding:10px 12px;font-size:13px;color:#666\">Deskripsi</td>\n          <td style=\"padding:10px 12px;font-size:13px;color:#444\">{{ $json.deskripsi_sinyal || '—' }}</td>\n        </tr>\n        <tr style=\"background:#fdf3f3\">\n          <td style=\"padding:10px 12px;font-size:13px;color:#666\">Skor Urgensi</td>\n          <td style=\"padding:10px 12px;font-size:14px;font-weight:bold;color:#c0392b\">{{ $json.skor_urgensi_hukum || 0 }}/100</td>\n        </tr>\n        <tr>\n          <td style=\"padding:10px 12px;font-size:13px;color:#666\">Dasar Hukum</td>\n          <td style=\"padding:10px 12px;font-size:13px;color:#444\">{{ $json.dasar_hukum || '—' }}</td>\n        </tr>\n      </table>\n\n      <div style=\"background:#fff8e1;border-left:4px solid #f39c12;padding:14px 16px;margin-bottom:20px;border-radius:0 6px 6px 0\">\n        <p style=\"margin:0 0 6px 0;font-size:13px;font-weight:bold;color:#b7770d\">⏱ Status SLA</p>\n        <p style=\"margin:0;font-size:13px;color:#555\">\n          Batas waktu: <b>{{ $json.sla_jam || '—' }} jam</b> &nbsp;·&nbsp;\n          Sudah berlalu: <b>{{ $json.jam_berlalu || '—' }} jam</b> &nbsp;·&nbsp;\n          Terlambat: <b style=\"color:#c0392b\">{{ $json.terlambat_jam || '—' }} jam</b>\n        </p>\n      </div>\n\n      <div style=\"background:#eaf4fb;border-left:4px solid #2980b9;padding:14px 16px;margin-bottom:20px;border-radius:0 6px 6px 0\">\n        <p style=\"margin:0 0 8px 0;font-size:13px;font-weight:bold;color:#1a5276\">📋 Rekomendasi Respons</p>\n        <p style=\"margin:0 0 4px 0;font-size:13px;color:#555\">⏰ <b>Tenggat:</b> {{ $json.rr_tenggat_waktu || '—' }}</p>\n        <p style=\"margin:0 0 4px 0;font-size:13px;color:#555\">✅ <b>Tindakan:</b> {{ $json.rr_tindakan_utama || '—' }}</p>\n        <p style=\"margin:0 0 4px 0;font-size:13px;color:#555\">📞 <b>Hubungi:</b> {{ $json.rr_pihak_yang_dihubungi || '—' }}</p>\n        <p style=\"margin:0;font-size:13px;color:#555\">📁 <b>Dokumentasi:</b> {{ $json.rr_langkah_dokumentasi || '—' }}</p>\n      </div>\n\n      <table style=\"width:100%;border-collapse:collapse;font-size:12px;color:#666\">\n        <tr><td style=\"padding:6px 0\">👤 Pelapor</td><td style=\"padding:6px 0\"><b>{{ $json.nama_pengirim || 'Anonim' }}</b> · {{ $json.nomor_pengirim || '—' }}</td></tr>\n        <tr><td style=\"padding:6px 0\">📍 Lokasi</td><td style=\"padding:6px 0\">{{ $json.nama_lokasi || '—' }}</td></tr>\n        <tr><td style=\"padding:6px 0\">🏷 Program</td><td style=\"padding:6px 0\">{{ $json.nama_program || '—' }}</td></tr>\n        <tr><td style=\"padding:6px 0\">🕐 Dicatat</td><td style=\"padding:6px 0\">{{ $json.waktu_catat || '—' }}</td></tr>\n        <tr><td style=\"padding:6px 0\">🔔 Dieskalasi</td><td style=\"padding:6px 0\">{{ $json.waktu_eskalasi || '—' }}</td></tr>\n      </table>\n\n    </div>\n  </div>\n\n  <!-- Footer -->\n  <div style=\"background:#ecf0f1;padding:12px 24px;border-radius:0 0 8px 8px;border:1px solid #ddd;border-top:none;text-align:center\">\n    <p style=\"margin:0;font-size:11px;color:#999\">OZJ Automated Alert · {{ $json.ticket_id || $json._checked_at || '—' }} · Jangan balas email ini</p>\n  </div>\n\n</body>\n</html>",
+        "options": {}
+      },
+      "id": "f29ca3b5-5c31-4c36-a141-bf78ab89cc7b",
+      "name": "Gmail: Eskalasi SLA",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2,
+      "position": [
+        1360,
+        1632
+      ],
+      "webhookId": "221e5b7e-f1ea-4bc4-9fed-cf7a10309dd0",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "5nzf5fzC75IkZhcE",
+          "name": "Gmail account Aiguide"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "functionCode": "const now = new Date();\n\n// ── SLA threshold (jam) per bahasa & level urgensi ───────────────────────────\nconst SLA_MAP = {\n  'Tinggi': 24,  'High': 24,  'Hoog': 24,\n  'Sedang': 48,  'Medium': 48, 'Gemiddeld': 48,\n  'Rendah': 168, 'Low': 168,  'Laag': 168\n};\nconst SLA_DEFAULT = 168;\n\n// ── Aturan follow-up (jam sejak waktu_catat) ─────────────────────────────────\nconst FOLLOWUP_WA_INTERVAL = 1;   // kirim WA setiap 1 jam jika belum ada tanggapan\nconst FOLLOWUP_CALL_JAM    = 6;   // telepon jika belum ada tanggapan setelah 6 jam\n\n// Status yang menandakan tiket TIDAK perlu dicek ulang\nconst SKIP_STATUSES = new Set(['Closed', 'Escalated', 'KRITIS']);\n\n// ── Helper: parse waktu dengan format campuran ───────────────────────────────\nfunction parseWaktu(str) {\n  if (!str) return new Date(NaN);\n  const normalized = String(str).trim().replace(' ', 'T');\n  const d = new Date(normalized);\n  return isNaN(d.getTime()) ? new Date(str) : d;\n}\n\n// ── Proses setiap item ───────────────────────────────────────────────────────\nconst eskalasi = [];\nconst skipped  = [];\n\nitems.forEach(item => {\n  const d = item.json;\n\n  // Skip jika row tidak lengkap\n  if (!d.ticket_id || !d.status_ticket) {\n    return skipped.push(d.ticket_id || `row_${d.row_number || '?'}`);\n  }\n\n  // Skip jika tiket sudah tutup\n  if (d.status_ticket === 'Closed') {\n    return skipped.push(d.ticket_id + ' [Closed]');\n  }\n\n  // Skip jika sudah dieskalasi ke level tertinggi\n  if (SKIP_STATUSES.has(d.status_eskalasi)) {\n    return skipped.push(d.ticket_id + ' [' + d.status_eskalasi + ']');\n  }\n\n  // Validasi waktu_catat\n  const waktu_catat = parseWaktu(d.waktu_catat);\n  if (isNaN(waktu_catat.getTime())) {\n    return skipped.push(d.ticket_id + ' [invalid waktu_catat]');\n  }\n\n  // Ambil SLA\n  const sla_jam = (typeof d._sla_jam === 'number' && d._sla_jam > 0)\n    ? d._sla_jam\n    : (SLA_MAP[d.urgensi_sinyal] || SLA_DEFAULT);\n\n  const jam_berlalu   = (now - waktu_catat) / 3_600_000;\n  const jam_terlambat = jam_berlalu - sla_jam;\n\n  // ── Cek sudah ada tanggapan? ─────────────────────────────────────────────\n  const sudah_ditanggapi = d.rekomendasi_keputusan && d.rekomendasi_keputusan.trim() !== '';\n\n  if (sudah_ditanggapi) {\n    return skipped.push(d.ticket_id + ' [sudah ditanggapi]');\n  }\n\n  // ── Tentukan aksi follow-up berdasarkan jam_berlalu ──────────────────────\n  // Hitung sudah berapa kali seharusnya WA dikirim (setiap 1 jam)\n  const followup_ke     = Math.floor(jam_berlalu / FOLLOWUP_WA_INTERVAL);\n  const followup_terakhir = d._followup_terakhir || 0; // simpan di data tiket\n\n  // Belum waktunya follow-up apapun\n  if (jam_berlalu < FOLLOWUP_WA_INTERVAL) {\n    return skipped.push(`${d.ticket_id} [belum 1 jam, berlalu ${Math.round(jam_berlalu * 10) / 10}j]`);\n  }\n\n  // Sudah dikirim follow-up ke-N ini\n  if (followup_ke <= followup_terakhir) {\n    return skipped.push(`${d.ticket_id} [followup-${followup_ke} sudah terkirim]`);\n  }\n\n  // ── Tentukan channel ─────────────────────────────────────────────────────\n  let channel, aksi, prioritas_telepon;\n\n  if (jam_berlalu >= FOLLOWUP_CALL_JAM) {\n    channel          = 'voice_call';\n    aksi             = 'TELEPON — tidak ada tanggapan setelah ' + Math.round(jam_berlalu * 10) / 10 + ' jam';\n    prioritas_telepon = true;\n  } else {\n    channel          = 'whatsapp';\n    aksi             = 'Follow-up WA ke-' + followup_ke + ' — belum ada tanggapan setelah ' + Math.round(jam_berlalu * 10) / 10 + ' jam';\n    prioritas_telepon = false;\n  }\n\n  eskalasi.push({\n    ...d,\n    // Status eskalasi\n    status_eskalasi   : jam_terlambat > 0 ? 'Escalated' : 'Follow-up',\n    waktu_eskalasi    : now.toISOString(),\n    sla_jam           : sla_jam,\n    jam_berlalu       : Math.round(jam_berlalu * 10) / 10,\n    terlambat_jam     : jam_terlambat > 0 ? Math.round(jam_terlambat * 10) / 10 : 0,\n    sisa_sla_jam      : jam_terlambat <= 0 ? Math.round((sla_jam - jam_berlalu) * 10) / 10 : 0,\n    // Follow-up info\n    eskalasi_channel  : channel,\n    followup_ke       : followup_ke,\n    _followup_terakhir: followup_ke,   // update untuk cek berikutnya\n    aksi_followup     : aksi,\n    perlu_telepon     : prioritas_telepon\n  });\n});\n\n// ── Output ───────────────────────────────────────────────────────────────────\nif (eskalasi.length === 0) {\n  return [{ json: {\n    _skip        : true,\n    _checked_at  : now.toISOString(),\n    _total_items : items.length,\n    _skipped_ids : skipped\n  }}];\n}\n\nreturn eskalasi.map(e => ({ json: e }));"
+      },
+      "id": "af88ad23-5de3-4013-97ad-7ab0423dfe38",
+      "name": "Fungsi: Deteksi SLA Breach",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        992,
+        1488
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "=https://docs.google.com/spreadsheets/d/1SmLv-fLtv2-nqUhzFOfjJsmRttOcY6eXtl0Nu5n11q4/edit?gid=0#gid=0",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "A1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1SmLv-fLtv2-nqUhzFOfjJsmRttOcY6eXtl0Nu5n11q4/edit#gid=0"
+        },
+        "options": {}
+      },
+      "id": "6db07d3d-3f04-4a98-9aea-0febfc778ebf",
+      "name": "Sheets: Baca SLA",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [
+        768,
+        1488
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "aeCUMk2aKMbOTDkY",
+          "name": "Google Sheets account Aiguide"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "*/5 * * * *"
+            }
+          ]
+        }
+      },
+      "id": "fcc62253-18ed-4f00-bdde-6a425c084fd0",
+      "name": "Jadwal: Cek SLA (30 Menit)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        544,
+        1488
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        }
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        1552,
+        672
+      ],
+      "id": "1ba03724-30c4-4f0e-8147-d4fe5b89e9f4",
+      "name": "Get row(s) in sheet in Google Sheets",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "aeCUMk2aKMbOTDkY",
+          "name": "Google Sheets account Aiguide"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "HTTP: zenziva Voice Call Alert": {
+      "main": [
+        [
+          {
+            "node": "Respons: Konfirmasi Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "WAHA: Alert WhatsApp (Sedang)": {
+      "main": [
+        [
+          {
+            "node": "Respons: Konfirmasi Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail: Alert Urgensi Tinggi": {
+      "main": [
+        [
+          {
+            "node": "Respons: Konfirmasi Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch: Urgensi [0] VoiceCall | [1] WA | [2] Log": {
+      "main": [
+        [
+          {
+            "node": "Gmail: Alert Urgensi Tinggi",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "HTTP: zenziva Voice Call Alert",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "WAHA: Alert WhatsApp (Sedang)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respons: Konfirmasi Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fungsi: Routing Skor Hukum": {
+      "main": [
+        [
+          {
+            "node": "Switch: Urgensi [0] VoiceCall | [1] WA | [2] Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sheets: Simpan Sinyal": {
+      "main": [
+        [
+          {
+            "node": "Fungsi: Routing Skor Hukum",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fungsi: Flatten Sinyal": {
+      "main": [
+        [
+          {
+            "node": "Sheets: Simpan Sinyal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fungsi: Parse JSON Sinyal": {
+      "main": [
+        [
+          {
+            "node": "Fungsi: Flatten Sinyal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini: Ekstraksi Sinyal dari Observasi": {
+      "main": [
+        [
+          {
+            "node": "Fungsi: Parse JSON Sinyal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook: Input Manual Sinyal": {
+      "main": [
+        [
+          {
+            "node": "Gemini: Ekstraksi Sinyal dari Observasi",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "WAHA Trigger": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Gemini: Ekstraksi Sinyal dari Observasi",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Jadwal: Ringkasan Harian (18:00)": {
+      "main": [
+        [
+          {
+            "node": "Sheets: Baca Harian",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sheets: Baca Harian": {
+      "main": [
+        [
+          {
+            "node": "Fungsi: Metrik Harian",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fungsi: Metrik Harian": {
+      "main": [
+        [
+          {
+            "node": "Gemini: Ringkasan Harian",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini: Ringkasan Harian": {
+      "main": [
+        [
+          {
+            "node": "Send a text message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sheets: Baca SLA": {
+      "main": [
+        [
+          {
+            "node": "Fungsi: Deteksi SLA Breach",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Jadwal: Cek SLA (30 Menit)": {
+      "main": [
+        [
+          {
+            "node": "Sheets: Baca SLA",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet in Google Sheets": {
+      "ai_tool": [
+        [
+          {
+            "node": "Gemini: Ekstraksi Sinyal dari Observasi",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "1dd3b804-f595-4458-8785-10b21ae733d8",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "312a34c428f25f2a3c133770e3a7e104621df01202cf22fd47ee9076b135741b"
+  },
+  "id": "9hEsMI8X9mRLxiwG",
+  "tags": []
+}

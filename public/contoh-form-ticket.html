@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contoh Form Submit Ticket - OZJ</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { font-family: system-ui, sans-serif; max-width: 520px; margin: 2rem auto; padding: 0 1rem; }
+        h1 { font-size: 1.25rem; margin-bottom: 1rem; }
+        label { display: block; margin-top: 0.75rem; font-weight: 500; }
+        input, textarea, select { width: 100%; padding: 0.5rem; margin-top: 0.25rem; border: 1px solid #ccc; border-radius: 6px; }
+        textarea { min-height: 100px; resize: vertical; }
+        .hint { font-size: 0.8rem; color: #666; margin-top: 0.25rem; }
+        button { margin-top: 1rem; padding: 0.6rem 1.2rem; background: #2563eb; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; }
+        button:hover { background: #1d4ed8; }
+        button:disabled { opacity: 0.6; cursor: not-allowed; }
+        .message { margin-top: 1rem; padding: 0.75rem; border-radius: 6px; }
+        .message.success { background: #dcfce7; color: #166534; }
+        .message.error { background: #fee2e2; color: #991b1b; }
+        .auth-section { background: #f3f4f6; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; }
+    </style>
+</head>
+<body>
+    <h1>Contoh Form Submit Ticket</h1>
+    <p class="hint">Isi token setelah login, lalu isi form dan kirim. Base URL bisa diubah di bawah.</p>
+
+    <div class="auth-section">
+        <label for="apiUrl">API Base URL</label>
+        <input type="text" id="apiUrl" value="http://localhost:8000/api" placeholder="http://localhost:8000/api">
+        <label for="token">Token (dari login)</label>
+        <input type="password" id="token" placeholder="Tempel token dari POST /api/login">
+        <p class="hint">Login dulu: POST /api/login dengan email & password, lalu salin "token" ke sini.</p>
+    </div>
+
+    <form id="formTicket">
+        <label for="judul_sinyal">Judul Sinyal *</label>
+        <input type="text" id="judul_sinyal" name="judul_sinyal" required placeholder="Contoh: Keterlambatan distribusi bantuan">
+
+        <label for="deskripsi_sinyal">Deskripsi Sinyal *</label>
+        <textarea id="deskripsi_sinyal" name="deskripsi_sinyal" required placeholder="Jelaskan laporan atau sinyal secara lengkap."></textarea>
+
+        <label for="level_sinyal">Level Sinyal *</label>
+        <select id="level_sinyal" name="level_sinyal" required>
+            <option value="">-- Pilih --</option>
+            <option value="Low">Low</option>
+            <option value="Medium" selected>Medium</option>
+            <option value="High">High</option>
+        </select>
+
+        <label for="urgensi_sinyal">Urgensi Sinyal *</label>
+        <select id="urgensi_sinyal" name="urgensi_sinyal" required>
+            <option value="">-- Pilih --</option>
+            <option value="Rendah">Rendah</option>
+            <option value="Sedang">Sedang</option>
+            <option value="Tinggi" selected>Tinggi</option>
+        </select>
+
+        <label for="ringkasan_sinyal">Ringkasan (opsional)</label>
+        <input type="text" id="ringkasan_sinyal" name="ringkasan_sinyal" placeholder="Ringkasan singkat">
+
+        <label for="kategori_sinyal">Kategori (opsional)</label>
+        <input type="text" id="kategori_sinyal" name="kategori_sinyal" placeholder="Contoh: Logistik">
+
+        <label for="nama_pelapor">Nama Pelapor (opsional)</label>
+        <input type="text" id="nama_pelapor" name="nama_pelapor" placeholder="Nama yang melaporkan">
+
+        <label for="nama_lokasi">Lokasi (opsional)</label>
+        <input type="text" id="nama_lokasi" name="nama_lokasi" placeholder="Contoh: Kabupaten Sleman">
+
+        <button type="submit" id="btnSubmit">Kirim Ticket</button>
+    </form>
+
+    <div id="message" class="message" style="display: none;"></div>
+
+    <script>
+        const form = document.getElementById('formTicket');
+        const btnSubmit = document.getElementById('btnSubmit');
+        const messageEl = document.getElementById('message');
+
+        function showMessage(text, isError) {
+            messageEl.textContent = text;
+            messageEl.className = 'message ' + (isError ? 'error' : 'success');
+            messageEl.style.display = 'block';
+        }
+
+        form.addEventListener('submit', async function (e) {
+            e.preventDefault();
+            const base = (document.getElementById('apiUrl').value || '').replace(/\/$/, '');
+            const token = (document.getElementById('token').value || '').trim();
+            if (!base) {
+                showMessage('Isi API Base URL.', true);
+                return;
+            }
+            if (!token) {
+                showMessage('Isi token dari login (POST /api/login).', true);
+                return;
+            }
+
+            const payload = {
+                judul_sinyal: document.getElementById('judul_sinyal').value.trim(),
+                deskripsi_sinyal: document.getElementById('deskripsi_sinyal').value.trim(),
+                level_sinyal: document.getElementById('level_sinyal').value,
+                urgensi_sinyal: document.getElementById('urgensi_sinyal').value,
+            };
+            const opt = [
+                'ringkasan_sinyal', 'kategori_sinyal', 'nama_pelapor', 'nama_lokasi',
+                'nama_program', 'risiko_teridentifikasi', 'rekomendasi_ai'
+            ];
+            opt.forEach(function (name) {
+                const el = document.getElementById(name) || document.querySelector('[name="' + name + '"]');
+                if (el && el.value && el.value.trim()) payload[name] = el.value.trim();
+            });
+
+            btnSubmit.disabled = true;
+            messageEl.style.display = 'none';
+
+            try {
+                const res = await fetch(base + '/tickets', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'Authorization': 'Bearer ' + token,
+                    },
+                    body: JSON.stringify(payload),
+                });
+                const data = await res.json().catch(function () { return {}; });
+                if (res.ok) {
+                    showMessage('Ticket berhasil dibuat: ' + (data.ticket_id || data.id || 'OK'));
+                    form.reset();
+                } else {
+                    const msg = (data.message || data.errors || JSON.stringify(data)) || ('HTTP ' + res.status);
+                    showMessage('Gagal: ' + (typeof msg === 'object' ? JSON.stringify(msg) : msg), true);
+                }
+            } catch (err) {
+                showMessage('Error: ' + err.message, true);
+            } finally {
+                btnSubmit.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>
