@@ -17,12 +17,25 @@
     <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600,700" rel="stylesheet" />
     <style>
         body { font-family: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif; }
+        #sidebar-mobile-backdrop { transition: opacity 0.2s ease-out; }
+        #sidebar { transition: transform 0.2s ease-out; }
+        @media (max-width: 767px) {
+            #sidebar.sidebar-closed { transform: translateX(-100%); }
+            #sidebar.sidebar-open { transform: translateX(0); }
+        }
+        @media (min-width: 768px) {
+            #sidebar.sidebar-closed, #sidebar.sidebar-open { transform: none; }
+        }
     </style>
 </head>
 <body class="min-h-screen bg-slate-950 text-slate-100">
     @include('partials.locale-switcher')
+    {{-- Backdrop untuk mobile sidebar (hanya tampil saat open) --}}
+    <div id="sidebar-mobile-backdrop" class="fixed inset-0 bg-black/60 z-40 opacity-0 pointer-events-none md:pointer-events-none md:opacity-0 md:hidden" aria-hidden="true"></div>
+
     <div class="flex min-h-screen">
-        <aside class="w-60 bg-slate-900/80 border-r border-slate-800/60 hidden md:flex flex-col">
+        <aside id="sidebar" class="sidebar-closed fixed inset-y-0 left-0 z-50 w-72 bg-slate-900/95 border-r border-slate-800/60 flex flex-col md:relative md:inset-auto md:w-60 md:bg-slate-900/80"
+            aria-label="{{ __('nav_dashboard') }}">
             <div class="px-4 py-5 border-b border-slate-800/60">
                 <a href="{{ route('dashboard') }}" class="flex flex-col items-center gap-2 text-center">
                     <img src="{{ asset('images/ozj-logo.png') }}" alt="OZJ - AI Signal Intelligence" class="h-14 w-auto object-contain" />
@@ -64,12 +77,17 @@
         </aside>
 
         <div class="flex-1 flex flex-col">
-            <header class="md:hidden pl-4 pr-24 py-3 border-b border-slate-800/60 bg-slate-950/80 flex items-center justify-between">
-                <a href="{{ route('dashboard') }}" class="flex items-center gap-2">
+            <header class="md:hidden pl-4 pr-4 py-3 border-b border-slate-800/60 bg-slate-950/80 flex items-center justify-between gap-2">
+                <button type="button" id="sidebar-burger" class="p-2 -ml-1 rounded-lg text-slate-300 hover:bg-white/10 hover:text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-400/50" aria-label="{{ __('nav_open_menu') }}" aria-expanded="false" aria-controls="sidebar">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                    </svg>
+                </button>
+                <a href="{{ route('dashboard') }}" class="flex items-center gap-2 min-w-0 flex-1 justify-center">
                     <img src="{{ asset('images/ozj-logo.png') }}" alt="OZJ" class="h-9 w-auto object-contain" />
-                    <span class="text-sm font-semibold">{{ __('app_name') }}</span>
+                    <span class="text-sm font-semibold truncate">{{ __('app_name') }}</span>
                 </a>
-                <form method="POST" action="{{ route('logout') }}">@csrf
+                <form method="POST" action="{{ route('logout') }}" class="shrink-0">@csrf
                     <button type="submit" class="text-[11px] text-rose-300 hover:text-rose-200">{{ __('logout') }}</button>
                 </form>
             </header>
@@ -87,5 +105,47 @@
             </main>
         </div>
     </div>
+
+    <script>
+        (function () {
+            var sidebar = document.getElementById('sidebar');
+            var burger = document.getElementById('sidebar-burger');
+            var backdrop = document.getElementById('sidebar-mobile-backdrop');
+            if (!sidebar || !burger || !backdrop) return;
+
+            function isOpen() { return sidebar.classList.contains('sidebar-open'); }
+            function open() {
+                sidebar.classList.remove('sidebar-closed');
+                sidebar.classList.add('sidebar-open');
+                backdrop.classList.remove('opacity-0', 'pointer-events-none');
+                burger.setAttribute('aria-expanded', 'true');
+                document.body.style.overflow = 'hidden';
+            }
+            function close() {
+                sidebar.classList.remove('sidebar-open');
+                sidebar.classList.add('sidebar-closed');
+                backdrop.classList.add('opacity-0', 'pointer-events-none');
+                burger.setAttribute('aria-expanded', 'false');
+                document.body.style.overflow = '';
+            }
+            function toggle() {
+                if (window.innerWidth >= 768) return;
+                isOpen() ? close() : open();
+            }
+
+            burger.addEventListener('click', toggle);
+            backdrop.addEventListener('click', close);
+
+            sidebar.querySelectorAll('a').forEach(function (a) {
+                a.addEventListener('click', function () {
+                    if (window.innerWidth < 768) close();
+                });
+            });
+
+            window.addEventListener('resize', function () {
+                if (window.innerWidth >= 768) close();
+            });
+        })();
+    </script>
 </body>
 </html>
