@@ -42,6 +42,88 @@ class GoogleSheetsService
     }
 
     /**
+     * Get communication settings from sheet tab "communication" (key in col A, value in col B).
+     *
+     * @return array{phone_number: string, email: string, whatsapps: string}
+     */
+    public function getCommunicationSettings(): array
+    {
+        $range = config('services.google.communication_range', "'comunication'!A1:B10");
+        if (! $this->spreadsheetId) {
+            return ['phone_number' => '', 'email' => '', 'whatsapps' => ''];
+        }
+        try {
+            $response = $this->service->spreadsheets_values->get($this->spreadsheetId, $range);
+        } catch (\Throwable $e) {
+            report($e);
+            return ['phone_number' => '', 'email' => '', 'whatsapps' => ''];
+        }
+        $values = $response->getValues() ?? [];
+        $keys = ['phone_number', 'email', 'whatsapps'];
+        $result = array_fill_keys($keys, '');
+        foreach ($values as $row) {
+            $key = trim((string) ($row[0] ?? ''));
+            if (in_array($key, $keys, true)) {
+                $result[$key] = trim((string) ($row[1] ?? ''));
+            }
+        }
+        return $result;
+    }
+
+    /**
+     * Save communication settings to sheet tab "communication". Expects rows with key in A, value in B.
+     */
+    public function setCommunicationSettings(array $data): void
+    {
+        $range = config('services.google.communication_range', "'comunication'!A1:B10");
+        if (! $this->spreadsheetId) {
+            throw new \RuntimeException('Google Spreadsheet ID not configured.');
+        }
+        $response = $this->service->spreadsheets_values->get($this->spreadsheetId, $range);
+        $values = $response->getValues() ?? [];
+        $sheetPart = explode('!', $range)[0];
+        $sheetName = trim($sheetPart, "'\"");
+        $keys = ['phone_number', 'email', 'whatsapps'];
+        $keyToRow = [];
+        foreach ($values as $i => $row) {
+            $key = trim((string) ($row[0] ?? ''));
+            if (in_array($key, $keys, true)) {
+                $keyToRow[$key] = $i + 1;
+            }
+        }
+        $updates = [];
+        foreach ($keys as $key) {
+            $rowIndex = $keyToRow[$key] ?? null;
+            $value = trim((string) ($data[$key] ?? ''));
+            if ($rowIndex !== null) {
+                $cellRange = sprintf('%s!B%d', $sheetName, $rowIndex);
+                $updates[] = ['range' => $cellRange, 'values' => [[$value]]];
+            }
+        }
+        if ($updates !== []) {
+            $this->batchUpdateValues($updates);
+        }
+    }
+
+    /**
+     * Batch update multiple ranges.
+     *
+     * @param  array<int, array{range: string, values: array<int, array<int, string>>}>  $updates
+     */
+    private function batchUpdateValues(array $updates): void
+    {
+        $url = sprintf(
+            'https://sheets.googleapis.com/v4/spreadsheets/%s/values:batchUpdate',
+            $this->spreadsheetId
+        );
+        $body = json_encode([
+            'valueInputOption' => 'RAW',
+            'data' => $updates,
+        ]);
+        $this->sheetsRequest('POST', $url, $body);
+    }
+
+    /**
      * Sync a single ticket row back to Google Sheets.
      */
     public function syncTicket(Ticket $ticket): void

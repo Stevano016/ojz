@@ -110,5 +110,17 @@
     "tickets_empty": "Geen tickets met de huidige filters.",
     "tickets_page_info": "Pagina :current van :last (:total tickets)",
     "tickets_prev": "Vorige",
-    "tickets_next": "Volgende"
+    "tickets_next": "Volgende",
+
+    "nav_settings": "Instellingen",
+    "settings_title": "Instellingen",
+    "settings_heading": "Communicatie-instellingen",
+    "settings_intro": "Deze waarden worden opgeslagen in het Google Sheet-tabblad \"communication\" (kolom A = key, kolom B = value).",
+    "settings_phone_number": "Telefoonnummer",
+    "settings_email": "E-mail",
+    "settings_whatsapps": "WhatsApp",
+    "settings_save": "Opslaan",
+    "settings_saved": "Instellingen succesvol opgeslagen.",
+    "settings_save_error": "Kon niet opslaan naar Google Sheet. Controleer credentials en tabblad \"communication\".",
+    "settings_load_error": "Kon niet laden van Google Sheet (tabblad \"comunication\"):"
 }
