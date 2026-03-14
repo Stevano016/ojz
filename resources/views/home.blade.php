@@ -12,9 +12,7 @@
     @include('partials.locale-switcher')
     <div class="w-full max-w-md space-y-6">
         <div class="text-center">
-            <div class="inline-flex h-14 w-14 rounded-2xl bg-gradient-to-br from-amber-400 via-orange-500 to-rose-500 items-center justify-center shadow-lg shadow-amber-500/30 mb-4">
-                <span class="text-xl font-black tracking-tight text-slate-950">OZJ</span>
-            </div>
+            <img src="{{ asset('images/ozj-logo.png') }}" alt="OZJ - AI Signal Intelligence" class="h-24 w-auto object-contain mx-auto mb-4" />
             <h1 class="text-2xl font-semibold text-slate-100">{{ __('home_title') }}</h1>
             <p class="text-sm text-slate-400 mt-2">{{ __('home_subtitle') }}</p>
         </div>

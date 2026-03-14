@@ -17,16 +17,14 @@ export default function Layout() {
     return (
         <div className="min-h-screen bg-slate-950 text-slate-100 flex">
             <aside className="w-60 bg-slate-900/80 border-r border-slate-800/60 backdrop-blur-xl hidden md:flex flex-col">
-                <div className="px-6 py-5 border-b border-slate-800/60">
-                    <Link to="/dashboard" className="flex items-center gap-2">
-                        <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-amber-400 via-orange-500 to-rose-500 flex items-center justify-center shadow-lg shadow-amber-500/30">
-                            <span className="text-xs font-black tracking-tight">OZJ</span>
-                        </div>
+                <div className="px-4 py-5 border-b border-slate-800/60">
+                    <Link to="/dashboard" className="flex flex-col items-center gap-2 text-center">
+                        <img src="/images/ozj-logo.png" alt="OZJ - AI Signal Intelligence" className="h-14 w-auto object-contain" />
                         <div className="flex flex-col">
-                            <span className="text-sm font-semibold leading-tight">
+                            <span className="text-xs font-semibold leading-tight text-slate-200">
                                 OZJ Reporting
                             </span>
-                            <span className="text-[11px] text-slate-400 leading-tight">
+                            <span className="text-[10px] text-slate-500 leading-tight">
                                 AI Signal Intelligence
                             </span>
                         </div>
@@ -99,11 +97,7 @@ export default function Layout() {
             <div className="flex-1 flex flex-col">
                 <header className="md:hidden px-4 py-3 border-b border-slate-800/60 bg-slate-950/80 backdrop-blur-xl flex items-center justify-between">
                     <Link to="/dashboard" className="flex items-center gap-2">
-                        <div className="h-8 w-8 rounded-xl bg-gradient-to-br from-amber-400 via-orange-500 to-rose-500 flex items-center justify-center shadow-lg shadow-amber-500/30">
-                            <span className="text-[11px] font-black tracking-tight">
-                                OZJ
-                            </span>
-                        </div>
+                        <img src="/images/ozj-logo.png" alt="OZJ" className="h-9 w-auto object-contain" />
                         <span className="text-sm font-semibold">OZJ Reporting</span>
                     </Link>
                     {user && (

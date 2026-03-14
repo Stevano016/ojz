@@ -64,9 +64,7 @@ export default function TrackTicketPage() {
         <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center px-4 py-8">
             <div className="w-full max-w-md space-y-6">
                 <div className="text-center">
-                    <div className="inline-flex h-12 w-12 rounded-2xl bg-gradient-to-br from-amber-400 via-orange-500 to-rose-500 items-center justify-center shadow-lg shadow-amber-500/30 mb-3">
-                        <span className="text-lg font-black tracking-tight text-slate-950">OZJ</span>
-                    </div>
+                    <img src="/images/ozj-logo.png" alt="OZJ" className="h-14 w-auto object-contain mx-auto mb-3" />
                     <h1 className="text-xl font-semibold text-slate-100">Cek status laporan</h1>
                     <p className="text-sm text-slate-400 mt-1">
                         Masukkan nomor tiket Anda untuk melihat status pemrosesan.

@@ -11,10 +11,8 @@
 <body class="min-h-screen bg-slate-950 flex items-center justify-center px-4">
     @include('partials.locale-switcher')
     <div class="max-w-md w-full">
-        <div class="mb-6 flex items-center justify-center gap-2">
-            <div class="h-10 w-10 rounded-2xl bg-gradient-to-br from-amber-400 via-orange-500 to-rose-500 flex items-center justify-center shadow-lg shadow-amber-500/30">
-                <span class="text-sm font-black tracking-tight text-slate-950">OZJ</span>
-            </div>
+        <div class="mb-6 flex flex-col items-center gap-2 text-center">
+            <img src="{{ asset('images/ozj-logo.png') }}" alt="OZJ - AI Signal Intelligence" class="h-16 w-auto object-contain" />
             <div class="flex flex-col">
                 <span class="text-sm font-semibold text-slate-100">{{ __('app_name') }} System</span>
                 <span class="text-xs text-slate-400">{{ __('app_tagline') }} Youth Care</span>

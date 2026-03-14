@@ -34,12 +34,8 @@ export default function LoginPage() {
     return (
         <div className="min-h-screen bg-slate-950 flex items-center justify-center px-4">
             <div className="max-w-md w-full">
-                <div className="mb-6 flex items-center justify-center gap-2">
-                    <div className="h-10 w-10 rounded-2xl bg-gradient-to-br from-amber-400 via-orange-500 to-rose-500 flex items-center justify-center shadow-lg shadow-amber-500/30">
-                        <span className="text-sm font-black tracking-tight text-slate-950">
-                            OZJ
-                        </span>
-                    </div>
+                <div className="mb-6 flex flex-col items-center gap-2 text-center">
+                    <img src="/images/ozj-logo.png" alt="OZJ - AI Signal Intelligence" className="h-16 w-auto object-contain" />
                     <div className="flex flex-col">
                         <span className="text-sm font-semibold text-slate-100">
                             OZJ Reporting System

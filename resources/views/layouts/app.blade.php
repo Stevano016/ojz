@@ -22,14 +22,12 @@
     @include('partials.locale-switcher')
     <div class="flex min-h-screen">
         <aside class="w-60 bg-slate-900/80 border-r border-slate-800/60 hidden md:flex flex-col">
-            <div class="px-6 py-5 border-b border-slate-800/60">
-                <a href="{{ route('dashboard') }}" class="flex items-center gap-2">
-                    <div class="h-9 w-9 rounded-xl bg-gradient-to-br from-amber-400 via-orange-500 to-rose-500 flex items-center justify-center shadow-lg shadow-amber-500/30">
-                        <span class="text-xs font-black tracking-tight text-slate-950">OZJ</span>
-                    </div>
+            <div class="px-4 py-5 border-b border-slate-800/60">
+                <a href="{{ route('dashboard') }}" class="flex flex-col items-center gap-2 text-center">
+                    <img src="{{ asset('images/ozj-logo.png') }}" alt="OZJ - AI Signal Intelligence" class="h-14 w-auto object-contain" />
                     <div class="flex flex-col">
-                        <span class="text-sm font-semibold leading-tight">{{ __('app_name') }}</span>
-                        <span class="text-[11px] text-slate-400 leading-tight">{{ __('app_tagline') }}</span>
+                        <span class="text-xs font-semibold leading-tight text-slate-200">{{ __('app_name') }}</span>
+                        <span class="text-[10px] text-slate-500 leading-tight">{{ __('app_tagline') }}</span>
                     </div>
                 </a>
             </div>
@@ -64,9 +62,7 @@
         <div class="flex-1 flex flex-col">
             <header class="md:hidden pl-4 pr-24 py-3 border-b border-slate-800/60 bg-slate-950/80 flex items-center justify-between">
                 <a href="{{ route('dashboard') }}" class="flex items-center gap-2">
-                    <div class="h-8 w-8 rounded-xl bg-gradient-to-br from-amber-400 via-orange-500 to-rose-500 flex items-center justify-center shadow-lg shadow-amber-500/30">
-                        <span class="text-[11px] font-black tracking-tight text-slate-950">OZJ</span>
-                    </div>
+                    <img src="{{ asset('images/ozj-logo.png') }}" alt="OZJ" class="h-9 w-auto object-contain" />
                     <span class="text-sm font-semibold">{{ __('app_name') }}</span>
                 </a>
                 <form method="POST" action="{{ route('logout') }}">@csrf
