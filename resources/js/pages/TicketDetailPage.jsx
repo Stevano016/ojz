@@ -16,9 +16,13 @@ export default function TicketDetailPage() {
         description: '',
         new_status: '',
     });
+    const [sheetSyncWarning, setSheetSyncWarning] = useState(false);
+    const [sheetSyncError, setSheetSyncError] = useState(null);
 
     const fetchTicket = async () => {
         setLoading(true);
+        setSheetSyncWarning(false);
+        setSheetSyncError(null);
         try {
             const res = await axios.get(`/tickets/${id}`);
             setTicket(res.data);
@@ -36,10 +40,15 @@ export default function TicketDetailPage() {
         if (!newStatus || newStatus === ticket.status_ticket) return;
         setUpdatingStatus(true);
         try {
-        await axios.put(`/tickets/${id}`, {
+            const res = await axios.put(`/tickets/${id}`, {
                 status_ticket: newStatus,
             });
-            await fetchTicket();
+            setTicket(res.data);
+            setNewStatus(res.data.status_ticket);
+            setSheetSyncWarning(res.data.sheet_synced === false);
+            setSheetSyncError(res.data.sheet_sync_error ?? null);
+        } catch (err) {
+            console.error('Gagal update status:', err);
         } finally {
             setUpdatingStatus(false);
         }
@@ -48,7 +57,7 @@ export default function TicketDetailPage() {
     const handleAddAction = async (e) => {
         e.preventDefault();
         if (!actionForm.action_type || !actionForm.description) return;
-        await axios.post(`/tickets/${id}/actions`, {
+        const res = await axios.post(`/tickets/${id}/actions`, {
             ...actionForm,
             old_status: ticket.status_ticket,
         });
@@ -58,6 +67,10 @@ export default function TicketDetailPage() {
             new_status: '',
         });
         await fetchTicket();
+        if (res.data?.sheet_synced === false) {
+            setSheetSyncWarning(true);
+            setSheetSyncError(res.data?.sheet_sync_error ?? null);
+        }
     };
 
     if (loading || !ticket) {
@@ -225,6 +238,20 @@ export default function TicketDetailPage() {
                 </div>
 
                 <div className="space-y-3">
+                    {sheetSyncWarning && (
+                        <div className="rounded-xl border border-amber-500/50 bg-amber-500/10 px-3 py-2 text-[11px] text-amber-200 space-y-1">
+                            <div>Status sudah tersimpan di database. Sinkron ke Google Sheets gagal.</div>
+                            {sheetSyncError ? (
+                                <div className="mt-1 font-mono text-[10px] text-amber-300/90 break-all">
+                                    {sheetSyncError}
+                                </div>
+                            ) : (
+                                <div className="text-amber-200/80">
+                                    Cek .env (GOOGLE_SHEETS_SPREADSHEET_ID, credentials) dan share spreadsheet ke email service account.
+                                </div>
+                            )}
+                        </div>
+                    )}
                     <div className="rounded-2xl bg-slate-900/70 border border-slate-800/80 p-4 shadow-xl shadow-black/30">
                         <div className="text-xs font-medium text-slate-300 mb-2">
                             Ubah status tiket

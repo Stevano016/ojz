@@ -34,6 +34,22 @@ Jika masih error, pastikan tidak ada konflik PHP version (perlu PHP 8.1+).
 
 ---
 
+## 3b. **cURL error 28: Connection timed out** untuk `oauth2.googleapis.com/token` (sync ke Sheet gagal)
+
+**Penyebab:** Koneksi ke Google (ambil token OAuth) tidak terbentuk dalam waktu yang diset (sebelumnya 10 detik). Sering terjadi di jaringan lambat, VPN, atau firewall yang membatasi akses ke `*.googleapis.com`.
+
+**Solusi:**
+1. **Naikkan timeout** di `.env` (nilai dalam detik):
+   ```env
+   GOOGLE_CONNECT_TIMEOUT=25
+   GOOGLE_HTTP_TIMEOUT=45
+   ```
+   Default di kode sudah 25/45. Jika masih timeout, coba `40` dan `60`.
+2. **Cek jaringan:** Pastikan `https://oauth2.googleapis.com` dan `https://sheets.googleapis.com` bisa diakses dari mesin yang menjalankan Laravel (browser atau `curl -I https://oauth2.googleapis.com`).
+3. **VPN/Proxy:** Jika pakai VPN atau proxy korporat, coba matikan atau gunakan jaringan lain; atau jalankan aplikasi di server yang punya akses stabil ke Google.
+
+---
+
 ## 4. **Table 'personal_access_tokens' doesn't exist**
 
 **Penyebab:** Migration Sanctum belum dijalankan.
@@ -53,7 +69,22 @@ php artisan migrate
 
 ---
 
-## 6. **Scheduled command tickets:sync-sheet failed**
+## 6. **Google service account credentials file not found** (sync ke Sheet gagal, banner kuning di halaman tiket)
+
+**Penyebab:** File JSON credentials tidak ada di path yang diset di `.env` (`GOOGLE_APPLICATION_CREDENTIALS`). Default: `storage/app/google/service-account.json`.
+
+**Solusi:**
+1. Buat folder `storage/app/google/` bila belum ada.
+2. Di Google Cloud Console: enable Google Sheets API, buat Service Account, download key JSON.
+3. Simpan file tersebut sebagai `storage/app/google/service-account.json`.
+4. Share spreadsheet (Google Sheets) dengan email service account (…@….iam.gserviceaccount.com) sebagai **Editor**.
+5. Cek `.env`: `GOOGLE_SHEETS_SPREADSHEET_ID` = ID spreadsheet (dari URL: `/d/ID_INI/edit`).
+
+Lihat juga `storage/app/google/README.md` untuk langkah detail.
+
+---
+
+## 7. **Scheduled command tickets:sync-sheet failed**
 
 **Penyebab:** Ada scheduler yang menjalankan command `tickets:sync-sheet` yang mungkin sudah dihapus. Sync sekarang dilakukan on-demand (saat buka dashboard / list tiket).
 

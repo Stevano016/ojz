@@ -6,11 +6,14 @@ use App\Models\Ticket;
 use Google\Client;
 use Google\Service\Sheets;
 use Google\Service\Sheets\ValueRange;
+use GuzzleHttp\Client as GuzzleClient;
 
 class GoogleSheetsService
 {
     private Sheets $service;
+
     private string $spreadsheetId;
+
     private string $ticketsRange;
 
     public function __construct()
@@ -26,9 +29,17 @@ class GoogleSheetsService
 
         $client->setAuthConfig(base_path($credentialsPath));
 
+        // Timeout untuk koneksi & request ke Google (token + Sheets API). Naikkan jika cURL 28 / connection timed out.
+        $timeout = (int) config('services.google.http_timeout', 45);
+        $connectTimeout = (int) config('services.google.connect_timeout', 25);
+        $client->setHttpClient(new GuzzleClient([
+            'timeout' => $timeout,
+            'connect_timeout' => $connectTimeout,
+        ]));
+
         $this->service = new Sheets($client);
         $this->spreadsheetId = config('services.google.spreadsheet_id');
-        $this->ticketsRange = config('services.google.tickets_range', 'Sheet1!A1:AH');
+        $this->ticketsRange = config('services.google.tickets_range', "'A1'!A1:AH");
     }
 
     /**
@@ -211,6 +222,9 @@ class GoogleSheetsService
                     break;
                 case 'rr_langkah_dokumentasi':
                     $data[] = $ticket->rr_langkah_dokumentasi;
+                    break;
+                case 'Potensi keterlambatan distribusi bantuan':
+                    $data[] = null; // kolom opsional di sheet, belum di DB
                     break;
                 default:
                     $data[] = null;

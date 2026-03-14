@@ -1,4 +1,7 @@
 *
 !private/
 !public/
+!google/
+!google/README.md
 !.gitignore
+google/*.json

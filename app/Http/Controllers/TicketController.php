@@ -154,7 +154,11 @@ class TicketController extends Controller
         $ticket = Ticket::findOrFail($id);
         $oldStatus = $ticket->status_ticket;
 
-        $ticket->update($request->all());
+        // Hanya field fillable (kecuali ticket_id) agar update aman dan sinkron ke DB + Sheet
+        $allowed = array_diff($ticket->getFillable(), ['ticket_id']);
+        $payload = $request->only($allowed);
+
+        $ticket->update($payload);
 
         if ($request->has('status_ticket') && $oldStatus !== $request->status_ticket) {
             TicketAction::create([
@@ -167,7 +171,14 @@ class TicketController extends Controller
             ]);
         }
 
-        $this->syncTicketToSheets($ticket);
+        // Sinkron ke Google Sheets secara realtime dengan data terbaru dari DB (perlu waktu cukup jika jaringan lambat)
+        set_time_limit(65);
+        [$sheetSynced, $sheetError] = $this->syncTicketToSheets($ticket->fresh());
+        $ticket = $ticket->fresh()->load('actions.user');
+        $ticket->sheet_synced = $sheetSynced;
+        if ($sheetError !== null) {
+            $ticket->sheet_sync_error = $sheetError;
+        }
 
         return response()->json($ticket);
     }
@@ -194,20 +205,34 @@ class TicketController extends Controller
             $ticket->update(['status_ticket' => $request->new_status]);
         }
 
-        $this->syncTicketToSheets($ticket->fresh());
+        [$sheetSynced, $sheetError] = $this->syncTicketToSheets($ticket->fresh());
 
-        return response()->json($action->load('user'), 201);
+        $response = $action->load('user')->toArray();
+        $response['sheet_synced'] = $sheetSynced;
+        if ($sheetError !== null) {
+            $response['sheet_sync_error'] = $sheetError;
+        }
+        return response()->json($response, 201);
     }
 
-    private function syncTicketToSheets(Ticket $ticket): void
+    /**
+     * Sinkronkan tiket ke Google Sheets (realtime).
+     * Mengembalikan [berhasil, pesan_error]. Pesan error hanya diisi saat APP_DEBUG=true.
+     */
+    private function syncTicketToSheets(Ticket $ticket): array
     {
         try {
             app(GoogleSheetsService::class)->syncTicket($ticket);
+            return [true, null];
         } catch (\Throwable $e) {
+            $message = $e->getMessage();
             Log::warning('Sync ticket ke Google Sheets gagal', [
                 'ticket_id' => $ticket->ticket_id,
-                'message' => $e->getMessage(),
+                'message' => $message,
             ]);
+            $errorForResponse = config('app.debug') ? $message : null;
+
+            return [false, $errorForResponse];
         }
     }
 

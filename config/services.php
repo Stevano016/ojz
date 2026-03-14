@@ -42,7 +42,9 @@ return [
     'google' => [
         'credentials_path' => env('GOOGLE_APPLICATION_CREDENTIALS'),
         'spreadsheet_id' => env('GOOGLE_SHEETS_SPREADSHEET_ID'),
-        'tickets_range' => env('GOOGLE_SHEETS_TICKETS_RANGE', 'Sheet1!A1:AH'),
+        'tickets_range' => env('GOOGLE_SHEETS_TICKETS_RANGE', "'A1'!A1:AH"),
+        'http_timeout' => env('GOOGLE_HTTP_TIMEOUT', 45),
+        'connect_timeout' => env('GOOGLE_CONNECT_TIMEOUT', 25),
     ],
 
     'n8n' => [
