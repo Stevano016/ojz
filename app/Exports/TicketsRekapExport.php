@@ -39,7 +39,8 @@ class TicketsRekapExport implements FromArray, WithTitle, WithColumnWidths, With
         $inProgress = Ticket::where('status_ticket', 'In Progress')->count();
         $resolved = Ticket::where('status_ticket', 'Resolved')->count();
         $closed = Ticket::where('status_ticket', 'Closed')->count();
-        $avgScore = round((float) Ticket::avg('skor_urgensi_hukum'), 1);
+        $avgRaw = $total > 0 ? Ticket::avg('skor_urgensi_hukum') : null;
+        $avgScore = $avgRaw !== null ? round((float) $avgRaw, 1) : '—';
 
         $byLevel = Ticket::select('level_sinyal', DB::raw('count(*) as total'))
             ->whereNotNull('level_sinyal')
@@ -149,9 +150,10 @@ class TicketsRekapExport implements FromArray, WithTitle, WithColumnWidths, With
             ],
             // Ringkasan
             "A{$this->summaryHeaderRow}:B{$this->summaryHeaderRow}" => $sectionFill,
-        $styles["A4:B{$this->summaryDataEndRow}"] = array_merge($borderThin, [
-            'alignment' => ['vertical' => Alignment::VERTICAL_CENTER, 'wrapText' => false],
-        ]);
+            "A4:B{$this->summaryDataEndRow}" => array_merge($borderThin, [
+                'alignment' => ['vertical' => Alignment::VERTICAL_CENTER, 'wrapText' => false],
+            ]),
+        ];
 
         // Level Sinyal
         $styles["A{$this->levelHeaderRow}:B{$this->levelHeaderRow}"] = $sectionFill;

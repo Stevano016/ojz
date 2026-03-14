@@ -18,6 +18,7 @@ export default function TicketDetailPage() {
     });
     const [sheetSyncWarning, setSheetSyncWarning] = useState(false);
     const [sheetSyncError, setSheetSyncError] = useState(null);
+    const [exportingExcel, setExportingExcel] = useState(false);
 
     const fetchTicket = async () => {
         setLoading(true);
@@ -73,6 +74,30 @@ export default function TicketDetailPage() {
         }
     };
 
+    const handleDownloadExcel = () => {
+        if (!ticket?.ticket_id) return;
+        setExportingExcel(true);
+        const q = `?ticket_id=${encodeURIComponent(ticket.ticket_id)}`;
+        const url = `/export/tickets/per-ticket${q}`;
+        axios.get(url, { responseType: 'blob' })
+            .then((res) => {
+                const disp = res.headers['content-disposition'];
+                let name = `ozj-ticket-${ticket.ticket_id}.xlsx`;
+                if (disp) {
+                    const m = disp.match(/filename\*=(?:UTF-8'')?([^;\n]+)/i) || disp.match(/filename="?([^";\n]+)"?/i);
+                    if (m) name = decodeURIComponent((m[1] || '').trim().replace(/^["']|["']$/g, ''));
+                }
+                const blob = res.data;
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = name;
+                a.click();
+                URL.revokeObjectURL(a.href);
+            })
+            .catch(() => alert('Gagal mengunduh Excel.'))
+            .finally(() => setExportingExcel(false));
+    };
+
     if (loading || !ticket) {
         return (
             <div className="text-sm text-slate-400">
@@ -95,8 +120,19 @@ export default function TicketDetailPage() {
                     <div className="rounded-2xl bg-slate-900/70 border border-slate-800/80 p-4 shadow-xl shadow-black/30">
                         <div className="flex flex-wrap items-start justify-between gap-2 mb-2">
                             <div>
-                                <div className="text-xs font-mono text-slate-400">
-                                    {ticket.ticket_id}
+                                <div className="flex items-center gap-2">
+                                    <span className="text-xs font-mono text-slate-400">
+                                        {ticket.ticket_id}
+                                    </span>
+                                    <button
+                                        type="button"
+                                        onClick={handleDownloadExcel}
+                                        disabled={exportingExcel}
+                                        title="Download tiket ini sebagai Excel"
+                                        className="inline-flex items-center gap-1 rounded-lg border border-sky-600/50 bg-sky-500/10 px-2 py-1 text-[11px] font-medium text-sky-300 hover:bg-sky-500/20 disabled:opacity-50"
+                                    >
+                                        {exportingExcel ? '...' : '📥 Excel'}
+                                    </button>
                                 </div>
                                 <h1 className="text-lg font-semibold text-slate-50 mt-1">
                                     {ticket.judul_sinyal}

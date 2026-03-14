@@ -128,6 +128,15 @@ export default function TicketListPage() {
         }
     };
 
+    const handleDownloadOneTicket = (ticketId) => {
+        setExporting(`download-${ticketId}`);
+        const q = `?ticket_id=${encodeURIComponent(ticketId)}`;
+        downloadExcel(
+            `/export/tickets/per-ticket${q}`,
+            `ozj-ticket-${ticketId}.xlsx`
+        ).finally(() => setExporting(null));
+    };
+
     const toggleSelect = (id) => {
         setSelectedIds((prev) => {
             const next = new Set(prev);
@@ -143,17 +152,18 @@ export default function TicketListPage() {
             setSelectedIds(new Set(tickets.map((t) => t.id)));
         }
     };
+    const clearSelection = () => setSelectedIds(new Set());
 
     return (
-        <div className="space-y-4">
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+        <div className="space-y-6 max-w-[1600px]">
+            {/* Header */}
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div>
-                    <h1 className="text-xl font-semibold text-slate-50">
-                        Daftar tiket sinyal
+                    <h1 className="text-2xl font-bold text-slate-50 tracking-tight">
+                        Daftar Tiket Sinyal
                     </h1>
-                    <p className="text-sm text-slate-400 mt-1 max-w-2xl">
-                        Lihat, filter, dan telusuri semua sinyal AI dan laporan lapangan yang
-                        menjadi tiket.
+                    <p className="text-sm text-slate-400 mt-1 max-w-xl">
+                        Lihat, filter, dan unduh tiket. Pilih tiket lalu unduh sebagai Excel.
                     </p>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
@@ -161,7 +171,7 @@ export default function TicketListPage() {
                         type="button"
                         onClick={handleExportRekap}
                         disabled={!!exporting}
-                        className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-500/50 bg-emerald-500/10 px-3 py-2 text-xs font-medium text-emerald-300 hover:bg-emerald-500/20 disabled:opacity-50"
+                        className="inline-flex items-center gap-2 rounded-xl border border-emerald-500/50 bg-emerald-500/10 px-4 py-2.5 text-sm font-medium text-emerald-300 hover:bg-emerald-500/20 disabled:opacity-50 transition"
                     >
                         {exporting === 'rekap' ? '...' : '📥'} Excel Rekap
                     </button>
@@ -169,33 +179,47 @@ export default function TicketListPage() {
                         type="button"
                         onClick={() => handleExportPerTicket(false)}
                         disabled={!!exporting}
-                        className="inline-flex items-center gap-1.5 rounded-lg border border-sky-500/50 bg-sky-500/10 px-3 py-2 text-xs font-medium text-sky-300 hover:bg-sky-500/20 disabled:opacity-50"
+                        className="inline-flex items-center gap-2 rounded-xl border border-sky-500/50 bg-sky-500/10 px-4 py-2.5 text-sm font-medium text-sky-300 hover:bg-sky-500/20 disabled:opacity-50 transition"
                     >
-                        {exporting === 'per-ticket' ? '...' : '📥'} Excel Semua Tiket
+                        {exporting === 'per-ticket' ? '...' : '📥'} Excel Semua
                     </button>
                     <button
                         type="button"
                         onClick={() => handleExportPerTicket(true)}
                         disabled={!!exporting || selectedIds.size === 0}
-                        title={selectedIds.size === 0 ? 'Pilih tiket di tabel (centang)' : `Download ${selectedIds.size} tiket terpilih`}
-                        className="inline-flex items-center gap-1.5 rounded-lg border border-violet-500/50 bg-violet-500/10 px-3 py-2 text-xs font-medium text-violet-300 hover:bg-violet-500/20 disabled:opacity-50"
+                        title={selectedIds.size === 0 ? 'Centang tiket di kolom Pilih, lalu klik tombol ini' : `Unduh ${selectedIds.size} tiket yang dipilih`}
+                        className="inline-flex items-center gap-2 rounded-xl border-2 border-violet-500 bg-violet-500/20 px-4 py-2.5 text-sm font-semibold text-violet-200 hover:bg-violet-500/30 disabled:opacity-50 disabled:border-violet-500/50 disabled:bg-violet-500/10 transition"
                     >
-                        {exporting === 'per-ticket-selected' ? '...' : '📥'} Excel Terpilih {selectedIds.size > 0 ? `(${selectedIds.size})` : ''}
+                        {exporting === 'per-ticket-selected' ? 'Mengunduh...' : '📥 Unduh Terpilih'}
+                        {selectedIds.size > 0 && (
+                            <span className="rounded-full bg-violet-500/60 px-2 py-0.5 text-xs font-bold">
+                                {selectedIds.size}
+                            </span>
+                        )}
                     </button>
                     <Link
                         to="/tickets/new"
-                        className="inline-flex items-center justify-center rounded-lg bg-gradient-to-r from-amber-400 via-orange-500 to-rose-500 px-3.5 py-2 text-xs font-semibold text-slate-950 shadow-lg shadow-amber-500/40 hover:brightness-110 transition"
+                        className="inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-amber-400 via-orange-500 to-rose-500 px-4 py-2.5 text-sm font-semibold text-slate-950 shadow-lg shadow-amber-500/30 hover:brightness-110 transition"
                     >
-                        + Tiket manual baru
+                        + Tiket Baru
                     </Link>
                 </div>
             </div>
 
-            <div className="rounded-2xl bg-slate-900/70 border border-slate-800/80 p-3 md:p-4 shadow-xl shadow-black/30">
-                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-3">
-                    <div className="flex flex-wrap gap-2 text-[11px]">
+            {/* Petunjuk singkat */}
+            <div className="rounded-xl border border-slate-700/60 bg-slate-800/50 px-4 py-3 text-sm text-slate-300">
+                <span className="font-medium text-slate-200">Cara download: </span>
+                Centang tiket di kolom <strong className="text-amber-200/90">Pilih</strong> → klik <strong className="text-violet-200">Unduh Terpilih</strong>. Atau klik <strong className="text-sky-200">📥 Unduh</strong> per baris untuk satu tiket.
+            </div>
+
+            {/* Tabel & filter */}
+            <div className="rounded-2xl bg-slate-900/60 border border-slate-700/80 shadow-xl shadow-black/20 overflow-hidden">
+                <div className="px-4 py-3 border-b border-slate-700/80 bg-slate-800/30">
+                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                        <span className="text-xs font-medium uppercase tracking-wider text-slate-400">Filter</span>
+                        <div className="flex flex-wrap items-center gap-2">
                         <select
-                            className="bg-slate-900/80 border border-slate-700 rounded-lg px-2.5 py-1 text-slate-200 focus:outline-none focus:ring-1 focus:ring-amber-400/70"
+                            className="bg-slate-900/80 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-400/50"
                             value={filters.status}
                             onChange={(e) => onFilterChange('status', e.target.value)}
                         >
@@ -206,7 +230,7 @@ export default function TicketListPage() {
                             <option value="Closed">Closed</option>
                         </select>
                         <select
-                            className="bg-slate-900/80 border border-slate-700 rounded-lg px-2.5 py-1 text-slate-200 focus:outline-none focus:ring-1 focus:ring-amber-400/70"
+                            className="bg-slate-900/80 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-400/50"
                             value={filters.urgency}
                             onChange={(e) => onFilterChange('urgency', e.target.value)}
                         >
@@ -217,7 +241,7 @@ export default function TicketListPage() {
                             <option value="KRITIS">KRITIS</option>
                         </select>
                         <select
-                            className="bg-slate-900/80 border border-slate-700 rounded-lg px-2.5 py-1 text-slate-200 focus:outline-none focus:ring-1 focus:ring-amber-400/70"
+                            className="bg-slate-900/80 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-400/50"
                             value={filters.level}
                             onChange={(e) => onFilterChange('level', e.target.value)}
                         >
@@ -226,54 +250,50 @@ export default function TicketListPage() {
                             <option value="Meso">Meso</option>
                             <option value="Makro">Makro</option>
                         </select>
+                            <input
+                                type="text"
+                                placeholder="Cari (ID, judul, lokasi)..."
+                                className="min-w-[180px] bg-slate-900/80 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-400/50"
+                                value={filters.search}
+                                onChange={(e) => onFilterChange('search', e.target.value)}
+                            />
+                        </div>
                     </div>
-                    <input
-                        type="text"
-                        placeholder="Cari tiket (ID, judul, lokasi, pelapor)..."
-                        className="w-full md:w-72 bg-slate-900/80 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-amber-400/70"
-                        value={filters.search}
-                        onChange={(e) => onFilterChange('search', e.target.value)}
-                    />
                 </div>
 
                 <div className="overflow-x-auto">
-                    <table className="min-w-full text-xs text-left border-separate border-spacing-y-1">
+                    <table className="min-w-full text-sm text-left">
                         <thead>
-                            <tr className="text-[11px] uppercase tracking-wide text-slate-400">
-                                <th className="px-2 py-1.5 w-10">
+                            <tr className="bg-slate-800/80 text-xs uppercase tracking-wider text-slate-400 border-b border-slate-700/80">
+                                <th className="px-4 py-3 w-12 text-center">
                                     <input
                                         type="checkbox"
                                         checked={tickets.length > 0 && selectedIds.size === tickets.length}
                                         onChange={toggleSelectAll}
                                         className="rounded border-slate-600 bg-slate-800 text-amber-500 focus:ring-amber-400/70"
+                                        title="Pilih semua"
                                     />
                                 </th>
-                                <th className="px-3 py-1.5">Ticket</th>
-                                <th className="px-3 py-1.5">Status</th>
-                                <th className="px-3 py-1.5">Level</th>
-                                <th className="px-3 py-1.5">Kategori</th>
-                                <th className="px-3 py-1.5">Skor</th>
-                                <th className="px-3 py-1.5">Sumber</th>
-                                <th className="px-3 py-1.5">Waktu catat</th>
-                                <th className="px-3 py-1.5 text-right">Aksi</th>
+                                <th className="px-4 py-3 font-medium">Ticket</th>
+                                <th className="px-4 py-3 font-medium">Status</th>
+                                <th className="px-4 py-3 font-medium">Level</th>
+                                <th className="px-4 py-3 font-medium">Kategori</th>
+                                <th className="px-4 py-3 font-medium">Skor</th>
+                                <th className="px-4 py-3 font-medium">Sumber</th>
+                                <th className="px-4 py-3 font-medium">Waktu</th>
+                                <th className="px-4 py-3 text-right font-medium">Aksi</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody className="divide-y divide-slate-700/60">
                             {loading ? (
                                 <tr>
-                                    <td
-                                        colSpan={9}
-                                        className="px-3 py-4 text-center text-slate-400"
-                                    >
+                                    <td colSpan={9} className="px-4 py-12 text-center text-slate-400">
                                         Memuat tiket...
                                     </td>
                                 </tr>
                             ) : tickets.length === 0 ? (
                                 <tr>
-                                    <td
-                                        colSpan={9}
-                                        className="px-3 py-4 text-center text-slate-500"
-                                    >
+                                    <td colSpan={9} className="px-4 py-12 text-center text-slate-500">
                                         Tidak ada tiket dengan filter saat ini.
                                     </td>
                                 </tr>
@@ -281,31 +301,32 @@ export default function TicketListPage() {
                                 tickets.map((t) => (
                                     <tr
                                         key={t.id}
-                                        className="bg-slate-900/60 border border-slate-800/80 rounded-xl shadow-sm shadow-black/40 hover:bg-slate-900/80 transition"
+                                        className="bg-slate-900/40 hover:bg-slate-800/60 transition-colors"
                                     >
-                                        <td className="px-2 py-2.5 align-top">
+                                        <td className="px-4 py-3 align-middle text-center">
                                             <input
                                                 type="checkbox"
                                                 checked={selectedIds.has(t.id)}
                                                 onChange={() => toggleSelect(t.id)}
                                                 className="rounded border-slate-600 bg-slate-800 text-amber-500 focus:ring-amber-400/70"
+                                                title="Pilih untuk download"
                                             />
                                         </td>
-                                        <td className="px-3 py-2.5 align-top">
+                                        <td className="px-4 py-3 align-middle">
                                             <Link
                                                 to={`/tickets/${t.id}`}
                                                 className="text-xs font-medium text-sky-300 hover:text-sky-200"
                                             >
                                                 {t.ticket_id}
                                             </Link>
-                                            <div className="text-[11px] text-slate-200 mt-0.5 line-clamp-2">
+                                            <div className="text-xs text-slate-300 mt-0.5 line-clamp-2">
                                                 {t.judul_sinyal}
                                             </div>
-                                            <div className="text-[10px] text-slate-500 mt-0.5">
-                                                {t.nama_lokasi || 'Lokasi tidak tercatat'}
+                                            <div className="text-[11px] text-slate-500 mt-0.5">
+                                                {t.nama_lokasi || '—'}
                                             </div>
                                         </td>
-                                        <td className="px-3 py-2.5 align-top">
+                                        <td className="px-4 py-3 align-middle">
                                             <span
                                                 className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] ${
                                                     statusColors[t.status_ticket] ||
@@ -326,21 +347,17 @@ export default function TicketListPage() {
                                                 </span>
                                             </div>
                                         </td>
-                                        <td className="px-3 py-2.5 align-top text-[11px] text-slate-200">
-                                            {t.level_sinyal || '-'}
+                                        <td className="px-4 py-3 align-middle text-slate-200">
+                                            {t.level_sinyal || '—'}
                                         </td>
-                                        <td className="px-3 py-2.5 align-top text-[11px] text-slate-200">
-                                            {t.kategori_sinyal || '-'}
+                                        <td className="px-4 py-3 align-middle text-slate-200">
+                                            {t.kategori_sinyal || '—'}
                                         </td>
-                                        <td className="px-3 py-2.5 align-top text-[11px] text-slate-100">
-                                            <div className="font-semibold">
-                                                {t.skor_urgensi_hukum ?? '-'}
-                                            </div>
-                                            <div className="text-[10px] text-slate-500">
-                                                max {t.skor_urgensi_tertinggi ?? '-'}
-                                            </div>
+                                        <td className="px-4 py-3 align-middle">
+                                            <span className="font-semibold text-slate-100">{t.skor_urgensi_hukum ?? '—'}</span>
+                                            <div className="text-[11px] text-slate-500">max {t.skor_urgensi_tertinggi ?? '—'}</div>
                                         </td>
-                                        <td className="px-3 py-2.5 align-top text-[11px] text-slate-200">
+                                        <td className="px-4 py-3 align-middle text-slate-200">
                                             <span className="uppercase text-[10px] tracking-wide">
                                                 {t.jenis_sumber || '-'}
                                             </span>
@@ -350,18 +367,27 @@ export default function TicketListPage() {
                                                 </div>
                                             )}
                                         </td>
-                                        <td className="px-3 py-2.5 align-top text-[11px] text-slate-200">
-                                            {t.waktu_catat
-                                                ? new Date(t.waktu_catat).toLocaleString()
-                                                : '-'}
+                                        <td className="px-4 py-3 align-middle text-slate-300 text-xs whitespace-nowrap">
+                                            {t.waktu_catat ? new Date(t.waktu_catat).toLocaleString() : '—'}
                                         </td>
-                                        <td className="px-3 py-2.5 align-top text-right">
-                                            <Link
-                                                to={`/tickets/${t.id}`}
-                                                className="inline-flex items-center rounded-lg border border-slate-700/80 bg-slate-900/70 px-2.5 py-1 text-[11px] font-medium text-slate-100 hover:bg-slate-800 hover:border-amber-400/60 hover:text-amber-200 transition"
-                                            >
-                                                Edit
-                                            </Link>
+                                        <td className="px-4 py-3 align-middle text-right">
+                                            <div className="flex items-center justify-end gap-2">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleDownloadOneTicket(t.ticket_id)}
+                                                    disabled={!!exporting}
+                                                    title={`Unduh ${t.ticket_id}`}
+                                                    className="inline-flex items-center gap-1 rounded-lg border border-slate-600 bg-slate-800/80 px-2.5 py-1.5 text-xs font-medium text-sky-300 hover:bg-sky-500/20 hover:border-sky-500/40 transition disabled:opacity-50"
+                                                >
+                                                    {exporting === `download-${t.ticket_id}` ? '...' : '📥 Unduh'}
+                                                </button>
+                                                <Link
+                                                    to={`/tickets/${t.id}`}
+                                                    className="inline-flex items-center rounded-lg border border-slate-600 bg-slate-800/80 px-2.5 py-1.5 text-xs font-medium text-slate-200 hover:bg-amber-500/20 hover:border-amber-500/40 transition"
+                                                >
+                                                    Detail
+                                                </Link>
+                                            </div>
                                         </td>
                                     </tr>
                                 ))
@@ -371,27 +397,42 @@ export default function TicketListPage() {
                 </div>
 
                 {selectedIds.size > 0 && (
-                    <p className="mt-2 text-[11px] text-slate-500">
-                        {selectedIds.size} tiket dipilih. Klik &quot;Excel Terpilih&quot; untuk unduh hanya tiket yang dicentang.
-                    </p>
+                    <div className="mx-4 mb-4 flex flex-wrap items-center gap-3 rounded-xl border border-violet-500/40 bg-violet-500/10 px-4 py-3">
+                        <span className="text-sm font-medium text-violet-200">
+                            {selectedIds.size} tiket dipilih
+                        </span>
+                        <button
+                            type="button"
+                            onClick={() => handleExportPerTicket(true)}
+                            disabled={!!exporting}
+                            className="inline-flex items-center gap-2 rounded-lg bg-violet-500 px-4 py-2 text-sm font-semibold text-white hover:bg-violet-600 disabled:opacity-60 transition"
+                        >
+                            {exporting === 'per-ticket-selected' ? 'Mengunduh...' : '📥 Unduh Terpilih'}
+                        </button>
+                        <button
+                            type="button"
+                            onClick={clearSelection}
+                            className="text-xs text-slate-400 hover:text-slate-200 underline"
+                        >
+                            Batalkan pilihan
+                        </button>
+                    </div>
                 )}
 
                 {!loading && pagination.last_page > 1 && (
-                    <div className="mt-4 flex items-center justify-between gap-2 text-xs text-slate-400">
+                    <div className="px-4 py-3 border-t border-slate-700/80 flex items-center justify-between gap-4 text-sm text-slate-400 bg-slate-800/30">
                         <span>
-                            Halaman {pagination.current_page} dari {pagination.last_page}
+                            Halaman <span className="font-medium text-slate-200">{pagination.current_page}</span> dari {pagination.last_page}
                             {pagination.total > 0 && (
-                                <span className="ml-1">
-                                    ({pagination.total} tiket)
-                                </span>
+                                <span className="ml-2 text-slate-500">({pagination.total} tiket)</span>
                             )}
                         </span>
-                        <div className="flex items-center gap-1">
+                        <div className="flex items-center gap-2">
                             <button
                                 type="button"
                                 onClick={() => goToPage(pagination.current_page - 1)}
                                 disabled={pagination.current_page <= 1}
-                                className="px-2.5 py-1.5 rounded-md border border-slate-700 bg-slate-900/80 text-slate-200 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-800"
+                                className="px-3 py-2 rounded-lg border border-slate-600 bg-slate-800 text-slate-200 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-700 transition"
                             >
                                 Sebelumnya
                             </button>
@@ -399,7 +440,7 @@ export default function TicketListPage() {
                                 type="button"
                                 onClick={() => goToPage(pagination.current_page + 1)}
                                 disabled={pagination.current_page >= pagination.last_page}
-                                className="px-2.5 py-1.5 rounded-md border border-slate-700 bg-slate-900/80 text-slate-200 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-800"
+                                className="px-3 py-2 rounded-lg border border-slate-600 bg-slate-800 text-slate-200 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-700 transition"
                             >
                                 Selanjutnya
                             </button>

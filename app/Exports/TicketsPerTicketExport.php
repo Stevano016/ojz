@@ -22,10 +22,12 @@ class TicketsPerTicketExport implements FromCollection, WithHeadings, WithMappin
     use Exportable;
 
     /**
-     * @param  array<int>|null  $ids  ID tiket yang mau diexport; null = semua.
+     * @param  array<int>|null  $ids  ID internal (DB) tiket yang mau diexport; null = pakai ticketIds atau semua.
+     * @param  array<string>|null  $ticketIds  Ticket ID (string, mis. OZJ-20250314-1234) yang mau diexport; null = pakai ids atau semua.
      */
     public function __construct(
-        private readonly ?array $ids = null
+        private readonly ?array $ids = null,
+        private readonly ?array $ticketIds = null
     ) {
     }
 
@@ -35,7 +37,9 @@ class TicketsPerTicketExport implements FromCollection, WithHeadings, WithMappin
             ->orderBy('waktu_catat', 'desc')
             ->orderBy('id', 'desc');
 
-        if ($this->ids !== null && $this->ids !== []) {
+        if ($this->ticketIds !== null && $this->ticketIds !== []) {
+            $query->whereIn('ticket_id', $this->ticketIds);
+        } elseif ($this->ids !== null && $this->ids !== []) {
             $query->whereIn('id', $this->ids);
         }
 
@@ -47,6 +51,7 @@ class TicketsPerTicketExport implements FromCollection, WithHeadings, WithMappin
         return [
             'Ticket ID',
             'Judul Sinyal',
+            'Deskripsi Sinyal',
             'Ringkasan',
             'Level Sinyal',
             'Urgensi Sinyal',
@@ -62,6 +67,7 @@ class TicketsPerTicketExport implements FromCollection, WithHeadings, WithMappin
             'Jenis Sumber',
             'Rekomendasi AI',
             'Risiko Teridentifikasi',
+            'Dasar Hukum',
         ];
     }
 
@@ -71,23 +77,25 @@ class TicketsPerTicketExport implements FromCollection, WithHeadings, WithMappin
     public function map($ticket): array
     {
         return [
-            $ticket->ticket_id,
-            $ticket->judul_sinyal,
-            $ticket->ringkasan_sinyal,
-            $ticket->level_sinyal,
-            $ticket->urgensi_sinyal,
-            $ticket->kategori_sinyal,
-            $ticket->status_ticket,
-            $ticket->status_eskalasi,
-            $ticket->nama_pelapor,
-            $ticket->nama_lokasi,
-            $ticket->nama_program,
-            $ticket->waktu_catat?->format('Y-m-d H:i'),
-            $ticket->skor_urgensi_hukum,
-            $ticket->skor_urgensi_tertinggi,
-            $ticket->jenis_sumber,
-            $ticket->rekomendasi_ai,
-            $ticket->risiko_teridentifikasi,
+            $ticket->ticket_id ?? '',
+            $ticket->judul_sinyal ?? '',
+            $ticket->deskripsi_sinyal ?? '',
+            $ticket->ringkasan_sinyal ?? '',
+            $ticket->level_sinyal ?? '',
+            $ticket->urgensi_sinyal ?? '',
+            $ticket->kategori_sinyal ?? '',
+            $ticket->status_ticket ?? '',
+            $ticket->status_eskalasi ?? '',
+            $ticket->nama_pelapor ?? '',
+            $ticket->nama_lokasi ?? '',
+            $ticket->nama_program ?? '',
+            $ticket->waktu_catat?->format('Y-m-d H:i') ?? '',
+            $ticket->skor_urgensi_hukum ?? '',
+            $ticket->skor_urgensi_tertinggi ?? '',
+            $ticket->jenis_sumber ?? '',
+            $ticket->rekomendasi_ai ?? '',
+            $ticket->risiko_teridentifikasi ?? '',
+            $ticket->dasar_hukum ?? '',
         ];
     }
 
@@ -99,23 +107,25 @@ class TicketsPerTicketExport implements FromCollection, WithHeadings, WithMappin
     public function columnWidths(): array
     {
         return [
-            'A' => 12,
-            'B' => 28,
-            'C' => 36,
-            'D' => 10,
-            'E' => 12,
-            'F' => 18,
-            'G' => 12,
-            'H' => 14,
-            'I' => 18,
+            'A' => 18,
+            'B' => 32,
+            'C' => 42,
+            'D' => 36,
+            'E' => 10,
+            'F' => 12,
+            'G' => 18,
+            'H' => 12,
+            'I' => 14,
             'J' => 18,
             'K' => 18,
-            'L' => 16,
-            'M' => 10,
+            'L' => 18,
+            'M' => 16,
             'N' => 10,
-            'O' => 12,
-            'P' => 32,
-            'Q' => 32,
+            'O' => 10,
+            'P' => 12,
+            'Q' => 36,
+            'R' => 36,
+            'S' => 28,
         ];
     }
 
