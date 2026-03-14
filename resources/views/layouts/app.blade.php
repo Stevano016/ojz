@@ -41,6 +41,9 @@
                 <a href="{{ route('tickets.create') }}" class="flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium {{ request()->routeIs('tickets.create') ? 'bg-slate-800 text-amber-300' : 'text-slate-300 hover:bg-white/10' }}">
                     <span class="h-1.5 w-1.5 rounded-full bg-amber-400"></span> {{ __('nav_new_ticket') }}
                 </a>
+                <a href="{{ route('settings.index') }}" class="flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium {{ request()->routeIs('settings.*') ? 'bg-slate-800 text-amber-300' : 'text-slate-300 hover:bg-white/10' }}">
+                    <span class="h-1.5 w-1.5 rounded-full bg-violet-400"></span> {{ __('nav_settings') }}
+                </a>
             </nav>
             <div class="px-4 py-4 border-t border-slate-800/60 text-xs text-slate-400 flex items-center justify-between gap-2">
                 <div class="flex items-center gap-2 min-w-0">

@@ -43,6 +43,7 @@ return [
         'credentials_path' => env('GOOGLE_APPLICATION_CREDENTIALS'),
         'spreadsheet_id' => env('GOOGLE_SHEETS_SPREADSHEET_ID'),
         'tickets_range' => env('GOOGLE_SHEETS_TICKETS_RANGE', "'A1'!A1:AH"),
+        'communication_range' => env('GOOGLE_SHEETS_COMMUNICATION_RANGE', "'comunication'!A1:B10"),
         'sync_enabled' => env('GOOGLE_SHEETS_SYNC_ENABLED', true),
         'http_timeout' => env('GOOGLE_HTTP_TIMEOUT', 45),
         'connect_timeout' => env('GOOGLE_CONNECT_TIMEOUT', 25),

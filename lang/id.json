@@ -110,5 +110,17 @@
     "tickets_empty": "Tidak ada tiket dengan filter saat ini.",
     "tickets_page_info": "Halaman :current dari :last (:total tiket)",
     "tickets_prev": "Sebelumnya",
-    "tickets_next": "Selanjutnya"
+    "tickets_next": "Selanjutnya",
+
+    "nav_settings": "Pengaturan",
+    "settings_title": "Pengaturan",
+    "settings_heading": "Pengaturan komunikasi",
+    "settings_intro": "Nilai ini disimpan di tab Google Sheet \"communication\" (kolom A = key, kolom B = value).",
+    "settings_phone_number": "Nomor telepon",
+    "settings_email": "Email",
+    "settings_whatsapps": "WhatsApp",
+    "settings_save": "Simpan",
+    "settings_saved": "Pengaturan berhasil disimpan.",
+    "settings_save_error": "Gagal menyimpan ke Google Sheet. Periksa kredensial dan tab \"communication\".",
+    "settings_load_error": "Gagal memuat dari Google Sheet (tab \"comunication\"):"
 }

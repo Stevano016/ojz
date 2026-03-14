@@ -110,5 +110,17 @@
     "tickets_empty": "No tickets match the current filters.",
     "tickets_page_info": "Page :current of :last (:total tickets)",
     "tickets_prev": "Previous",
-    "tickets_next": "Next"
+    "tickets_next": "Next",
+
+    "nav_settings": "Settings",
+    "settings_title": "Settings",
+    "settings_heading": "Communication settings",
+    "settings_intro": "These values are stored in the Google Sheet tab \"communication\" (key in column A, value in column B).",
+    "settings_phone_number": "Phone number",
+    "settings_email": "Email",
+    "settings_whatsapps": "WhatsApp",
+    "settings_save": "Save",
+    "settings_saved": "Settings saved successfully.",
+    "settings_save_error": "Could not save to Google Sheet. Check credentials and tab \"communication\".",
+    "settings_load_error": "Could not load from Google Sheet (tab \"comunication\"):"
 }
