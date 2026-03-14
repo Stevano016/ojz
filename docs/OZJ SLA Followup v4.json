@@ -1,0 +1,2508 @@
+{
+  "name": "OZJ SLA Followup v4",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "##  WhatsApp + Manual Input Flow",
+        "height": 1020,
+        "width": 3440,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        496,
+        48
+      ],
+      "id": "3c21e783-a64b-4063-ac4b-a7ca475fbfe1",
+      "name": "Sticky: Main"
+    },
+    {
+      "parameters": {
+        "functionCode": "const skor = parseInt($json.skor_urgensi_hukum) || 0;\nconst u    = ($json.urgensi_sinyal || '').trim();\nconst lang = ($json.bahasa_output  || 'en').toLowerCase();\n\n// ── Label urgensi per bahasa ─────────────────────────────────────────────────\nconst LABEL_TINGGI  = { id: 'Tinggi',    en: 'High',   nl: 'Hoog'      };\nconst LABEL_SEDANG  = { id: 'Sedang',    en: 'Medium', nl: 'Gemiddeld' };\nconst LABEL_RENDAH  = { id: 'Rendah',    en: 'Low',    nl: 'Laag'      };\n\nconst isTinggi = skor >= 90\n  || u === LABEL_TINGGI.id\n  || u === LABEL_TINGGI.en\n  || u === LABEL_TINGGI.nl;\n\nconst isSedang = !isTinggi && (\n     skor >= 70\n  || skor >= 50\n  || u === LABEL_SEDANG.id\n  || u === LABEL_SEDANG.en\n  || u === LABEL_SEDANG.nl\n);\n\n// ── Routing ──────────────────────────────────────────────────────────────────\nlet route, channel, sla_jam;\n\nif (skor >= 90 || isTinggi) {\n  route   = 'kritis_voice_call';   // akut → telepon langsung\n  channel = 'voice_call';\n  sla_jam = 24;\n} else if (skor >= 70 || isSedang) {\n  route   = 'tinggi_whatsapp';     // Meldcode terpicu → WhatsApp\n  channel = 'whatsapp';\n  sla_jam = 48;\n} else if (skor >= 50) {\n  route   = 'sedang_whatsapp';     // risiko sedang → WhatsApp\n  channel = 'whatsapp';\n  sla_jam = 168;                   // 1 minggu\n} else {\n  route   = 'rendah_dossier';      // informatif → catat saja\n  channel = 'dossier';\n  sla_jam = null;\n}\n\n// ── Deadline eskalasi (ISO string, null jika tidak berlaku) ──────────────────\nconst waktu_eskalasi = sla_jam !== null\n  ? new Date(Date.now() + sla_jam * 3600 * 1000).toISOString()\n  : '';\n\nreturn [{\n  json: {\n    ...$json,\n    skor_urgensi_hukum : skor,\n    _route             : route,\n    _channel           : channel,\n    _sla_jam           : sla_jam,\n    waktu_eskalasi     : waktu_eskalasi || $json.waktu_eskalasi || ''\n  }\n}];"
+      },
+      "id": "7c0502b2-8492-4e5d-b746-4e5a92528704",
+      "name": "Fungsi: Routing Skor Hukum",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        2560,
+        368
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "=https://docs.google.com/spreadsheets/d/1SmLv-fLtv2-nqUhzFOfjJsmRttOcY6eXtl0Nu5n11q4/edit?gid=0#gid=0",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "A1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1SmLv-fLtv2-nqUhzFOfjJsmRttOcY6eXtl0Nu5n11q4/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "ringkasan_sinyal": "={{ $json.ringkasan_sinyal }}",
+            "judul_sinyal": "={{ $json.judul_sinyal }}",
+            "deskripsi_sinyal": "={{ $json.deskripsi_sinyal }}",
+            "level_sinyal": "={{ $json.level_sinyal }}",
+            "urgensi_sinyal": "={{ $json.urgensi_sinyal }}",
+            "kategori_sinyal": "={{ $json.kategori_sinyal }}",
+            "nama_pelapor": "={{ $json.nama_pengirim }}",
+            "nama_lokasi": "={{ $json.nama_lokasi }}",
+            "rekomendasi_ai": "={{ $json.rekomendasi_ai }}",
+            "risiko_teridentifikasi": "={{ $json.risiko_teridentifikasi }}",
+            "jenis_sumber": "={{ $json.jenis_sumber }}",
+            "waktu_catat": "={{ $json.waktu_catat }}",
+            "ticket_id": "={{ $json.ticket_id }}",
+            "status_eskalasi": "={{ $json.status_eskalasi }}",
+            "status_ticket": "={{ $json.status_ticket }}",
+            "wa_chat_id": "={{ $json.wa_chat_id }}",
+            "waktu_eskalasi": "={{ $json.waktu_eskalasi }}",
+            "rekomendasi_keputusan": "={{ $json.rekomendasi_keputusan }}",
+            "skor_urgensi_hukum": "={{ $json.skor_urgensi_hukum }}",
+            "dasar_hukum": "={{ $json.dasar_hukum }}",
+            "bahasa_output": "={{ $json.bahasa_output }}",
+            "nama_pengirim": "={{ $json.nama_pengirim }}",
+            "nomor_pengirim": "={{ $json.nomor_pengirim }}",
+            "level_laporan": "={{ $json.level_laporan }}",
+            "urgensi_awal": "={{ $json.urgensi_awal }}",
+            "timestamp_laporan_ai": "={{ $json.timestamp_laporan_ai }}",
+            "skor_urgensi_tertinggi": "={{ $json.skor_urgensi_tertinggi }}",
+            "sinyal_index": "={{ $json.sinyal_index }}",
+            "sinyal_total": "={{ $json.sinyal_total }}",
+            "rr_tenggat_waktu": "={{ $json.rr_tenggat_waktu }}",
+            "rr_tindakan_utama": "={{ $json.rr_tindakan_utama }}",
+            "rr_pihak_yang_dihubungi": "={{ $json.rr_pihak_yang_dihubungi }}",
+            "rr_langkah_dokumentasi": "={{ $json.rr_langkah_dokumentasi }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "ringkasan_sinyal",
+              "displayName": "ringkasan_sinyal",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "judul_sinyal",
+              "displayName": "judul_sinyal",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "deskripsi_sinyal",
+              "displayName": "deskripsi_sinyal",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "level_sinyal",
+              "displayName": "level_sinyal",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "urgensi_sinyal",
+              "displayName": "urgensi_sinyal",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "kategori_sinyal",
+              "displayName": "kategori_sinyal",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "nama_program",
+              "displayName": "nama_program",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "nama_pelapor",
+              "displayName": "nama_pelapor",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "nama_lokasi",
+              "displayName": "nama_lokasi",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "risiko_teridentifikasi",
+              "displayName": "risiko_teridentifikasi",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "rekomendasi_ai",
+              "displayName": "rekomendasi_ai",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "jenis_sumber",
+              "displayName": "jenis_sumber",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "waktu_catat",
+              "displayName": "waktu_catat",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "ticket_id",
+              "displayName": "ticket_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "wa_chat_id",
+              "displayName": "wa_chat_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "status_ticket",
+              "displayName": "status_ticket",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "status_eskalasi",
+              "displayName": "status_eskalasi",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "waktu_eskalasi",
+              "displayName": "waktu_eskalasi",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "rekomendasi_keputusan",
+              "displayName": "rekomendasi_keputusan",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "skor_urgensi_hukum",
+              "displayName": "skor_urgensi_hukum",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "dasar_hukum",
+              "displayName": "dasar_hukum",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "bahasa_output",
+              "displayName": "bahasa_output",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "nama_pengirim",
+              "displayName": "nama_pengirim",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "nomor_pengirim",
+              "displayName": "nomor_pengirim",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "level_laporan",
+              "displayName": "level_laporan",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "urgensi_awal",
+              "displayName": "urgensi_awal",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "timestamp_laporan_ai",
+              "displayName": "timestamp_laporan_ai",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "skor_urgensi_tertinggi",
+              "displayName": "skor_urgensi_tertinggi",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "sinyal_index",
+              "displayName": "sinyal_index",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "sinyal_total",
+              "displayName": "sinyal_total",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "rr_tenggat_waktu",
+              "displayName": "rr_tenggat_waktu",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "rr_tindakan_utama",
+              "displayName": "rr_tindakan_utama",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "rr_pihak_yang_dihubungi",
+              "displayName": "rr_pihak_yang_dihubungi",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "rr_langkah_dokumentasi",
+              "displayName": "rr_langkah_dokumentasi",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "8be2ed7d-34fa-4462-b431-37bbf39aafc4",
+      "name": "Sheets: Simpan Sinyal",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [
+        2336,
+        368
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "aeCUMk2aKMbOTDkY",
+          "name": "Google Sheets account Aiguide"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "functionCode": "const d = items[0].json;\nconst sinyals = d.sinyal || [];\n\n// ── Ambil metadata: prioritas metadata_kasus dari AI, lalu fallback ke node input ──\nlet meta = {};\n\n// Layer 1: metadata_kasus yang sudah di-parse AI (dari prompt baru)\nif (typeof d.metadata_kasus === 'object' && d.metadata_kasus !== null) {\n  meta = { ...d.metadata_kasus };\n}\n\n// Layer 2: fallback ke node input manual / WhatsApp (isi field yang masih kosong)\nlet metaNode = {};\ntry { metaNode = $('Fungsi: Validasi Input Manual').first().json; } catch(e) {}\ntry { if (!metaNode.nama_pelapor) metaNode = $('Fungsi: Validasi Input WhatsApp').first().json; } catch(e) {}\n\n// Merge: metadata_kasus dari AI diutamakan, node input sebagai fallback\nconst nama_pengirim    = meta.nama_pengirim     || metaNode.nama_pelapor   || 'Anonim';\nconst nomor_pengirim   = meta.nomor_pengirim    || metaNode.wa_chat_id     || '';\nconst nama_program     = meta.program           || metaNode.nama_program   || '';\nconst nama_lokasi      = meta.lokasi            || metaNode.nama_lokasi    || '';\nconst level_laporan    = meta.level_laporan     || metaNode.level_laporan  || '';\nconst urgensi_awal     = meta.urgensi_awal      || metaNode.urgensi_laporan|| '';\nconst timestamp_ai     = meta.timestamp_laporan || '';\nconst jenis_sumber     = metaNode.jenis_sumber  || (nomor_pengirim ? 'whatsapp' : 'input-manual');\nconst wa_chat_id       = metaNode.wa_chat_id    || nomor_pengirim || '';\n\n// ── Generate ticket ID ───────────────────────────────────────────────────────\nconst td = new Date().toISOString().slice(0, 10).replace(/-/g, '');\nconst tr = Math.floor(Math.random() * 9000 + 1000);\n\n// ── Hitung skor urgensi tertinggi dari semua sinyal ──────────────────────────\nconst maxSkor = sinyals.length > 0\n  ? Math.max(...sinyals.map(s => typeof s.skor_urgensi_hukum === 'number' ? s.skor_urgensi_hukum : 0))\n  : 0;\n\n// Tentukan status eskalasi otomatis berdasarkan skor tertinggi\nconst status_eskalasi = maxSkor >= 90 ? 'KRITIS'\n  : maxSkor >= 70 ? 'Tinggi'\n  : maxSkor >= 50 ? 'Sedang'\n  : 'Normal';\n\n// ── Base ticket fields ───────────────────────────────────────────────────────\nconst base = {\n  ticket_id               : 'OZJ-' + td + '-' + tr,\n  bahasa_output           : d.bahasa_output       || 'en',\n  ringkasan_sinyal        : d.ringkasan            || '',\n  risiko_teridentifikasi  : Array.isArray(d.risiko)      ? d.risiko.join('; ')      : '',\n  rekomendasi_ai          : Array.isArray(d.rekomendasi) ? d.rekomendasi.join('; ') : '',\n  // Identitas pelapor\n  nama_pengirim           : nama_pengirim,\n  nomor_pengirim          : nomor_pengirim,\n  nama_program            : nama_program,\n  nama_lokasi             : nama_lokasi,\n  level_laporan           : level_laporan,\n  urgensi_awal            : urgensi_awal,\n  timestamp_laporan_ai    : timestamp_ai,\n  jenis_sumber            : jenis_sumber,\n  wa_chat_id              : wa_chat_id,\n  // Ticket status\n  waktu_catat             : new Date().toISOString(),\n  status_ticket           : 'Open',\n  status_eskalasi         : status_eskalasi,\n  skor_urgensi_tertinggi  : maxSkor,\n  waktu_eskalasi          : '',\n  rekomendasi_keputusan   : ''\n};\n\n// ── Helper: flatten rekomendasi_respons jadi field datar ────────────────────\nfunction flattenRR(rr) {\n  const safe = (typeof rr === 'object' && rr !== null) ? rr : {};\n  return {\n    rr_tenggat_waktu        : safe.tenggat_waktu        || '',\n    rr_tindakan_utama       : safe.tindakan_utama       || '',\n    rr_pihak_yang_dihubungi : safe.pihak_yang_dihubungi || '',\n    rr_langkah_dokumentasi  : safe.langkah_dokumentasi  || ''\n  };\n}\n\n// ── Fallback jika tidak ada sinyal ──────────────────────────────────────────\nif (sinyals.length === 0) {\n  return [{\n    json: {\n      ...base,\n      judul_sinyal       : 'Tidak ada sinyal terdeteksi',\n      deskripsi_sinyal   : '',\n      level_sinyal       : '',\n      urgensi_sinyal     : '',\n      kategori_sinyal    : '',\n      skor_urgensi_hukum : 0,\n      dasar_hukum        : '',\n      sinyal_index       : 0,\n      sinyal_total       : 0,\n      ...flattenRR({})\n    }\n  }];\n}\n\n// ── Map setiap sinyal jadi satu ticket row ───────────────────────────────────\nreturn sinyals.map((s, i) => ({\n  json: {\n    ...base,\n    ticket_id          : base.ticket_id + (i > 0 ? '-' + (i + 1) : ''),\n    sinyal_index       : i + 1,\n    sinyal_total       : sinyals.length,\n    judul_sinyal       : s.judul              || `Sinyal ${i + 1}`,\n    deskripsi_sinyal   : s.deskripsi          || '',\n    level_sinyal       : s.level              || '',\n    urgensi_sinyal     : s.urgensi            || '',\n    kategori_sinyal    : s.kategori           || '',\n    skor_urgensi_hukum : typeof s.skor_urgensi_hukum === 'number' ? s.skor_urgensi_hukum : 0,\n    dasar_hukum        : s.dasar_hukum        || '',\n    ...flattenRR(s.rekomendasi_respons)\n  }\n}));"
+      },
+      "id": "37a46fce-97f4-4046-b67d-54ce0028d007",
+      "name": "Fungsi: Flatten Sinyal",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        2112,
+        368
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Parsing output Gemini — mendukung berbagai format response\nlet raw = '';\nif (typeof $json.text === 'string' && $json.text.length > 0) {\n  raw = $json.text;\n} else if ($json.candidates && Array.isArray($json.candidates)) {\n  raw = ($json.candidates[0]?.content?.parts || []).map(p => p.text || '').join('');\n} else if ($json.content?.parts) {\n  raw = $json.content.parts.map(p => p.text || '').join('');\n} else if (Array.isArray($json.content) && $json.content[0]?.text) {\n  raw = $json.content.map(c => c.text || '').join('');\n} else if ($json.choices && Array.isArray($json.choices)) {\n  raw = $json.choices[0]?.message?.content || '';\n} else if (typeof $json.output === 'string') {\n  raw = $json.output;\n} else if (typeof $json.response === 'string') {\n  raw = $json.response;\n}\n\n// Bersihkan markdown/backtick dari output AI\nconst cleaned = raw\n  .replace(/```json\\s*/gi, '')\n  .replace(/```\\s*/g, '')\n  .replace(/^\\s*`+|`+\\s*$/g, '')\n  .trim();\n\nlet result;\ntry {\n  const jsonStart = cleaned.indexOf('{');\n  const jsonEnd   = cleaned.lastIndexOf('}');\n  if (jsonStart === -1 || jsonEnd <= jsonStart) throw new Error('Tidak ada JSON valid ditemukan');\n  result = JSON.parse(cleaned.substring(jsonStart, jsonEnd + 1));\n  if (typeof result !== 'object' || result === null || Array.isArray(result)) throw new Error('Result bukan object');\n\n  // Validasi bahasa\n  const VALID_LANG = ['id', 'en', 'nl'];\n  result.bahasa_output = VALID_LANG.includes(result.bahasa_output) ? result.bahasa_output : 'en';\n\n  // Normalisasi metadata_kasus\n  const mk = (typeof result.metadata_kasus === 'object' && result.metadata_kasus !== null) ? result.metadata_kasus : {};\n  result.metadata_kasus = {\n    nama_pengirim    : mk.nama_pengirim     || '',\n    nomor_pengirim   : mk.nomor_pengirim    || '',\n    timestamp_laporan: mk.timestamp_laporan || '',\n    program          : mk.program           || '',\n    lokasi           : mk.lokasi            || '',\n    level_laporan    : mk.level_laporan     || '',\n    urgensi_awal     : mk.urgensi_awal      || ''\n  };\n\n  // Normalisasi duplikasi — PENTING untuk IF node berikutnya\n  const dup = (typeof result.duplikasi === 'object' && result.duplikasi !== null) ? result.duplikasi : {};\n  result.duplikasi = {\n    status     : dup.status === true || dup.status === 'true',\n    ref_ticket : typeof dup.ref_ticket === 'string' ? dup.ref_ticket : '',\n    catatan    : typeof dup.catatan   === 'string' ? dup.catatan   : ''\n  };\n\n  result.ringkasan   = typeof result.ringkasan === 'string' ? result.ringkasan : '';\n  result.risiko      = Array.isArray(result.risiko)      ? result.risiko      : [];\n  result.rekomendasi = Array.isArray(result.rekomendasi) ? result.rekomendasi : [];\n\n  // Normalisasi sinyal\n  result.sinyal = Array.isArray(result.sinyal) ? result.sinyal.map((s, idx) => {\n    if (typeof s !== 'object' || s === null) return null;\n    const rr   = (typeof s.rekomendasi_respons === 'object' && s.rekomendasi_respons !== null) ? s.rekomendasi_respons : {};\n    const skor = typeof s.skor_urgensi_hukum === 'number' ? Math.min(100, Math.max(0, s.skor_urgensi_hukum)) : 0;\n    return {\n      judul              : s.judul    || ('Sinyal ' + (idx + 1)),\n      deskripsi          : s.deskripsi || '',\n      level              : s.level    || '',\n      urgensi            : s.urgensi  || '',\n      kategori           : s.kategori || '',\n      skor_urgensi_hukum : skor,\n      dasar_hukum        : s.dasar_hukum || '',\n      rekomendasi_respons: {\n        tenggat_waktu       : rr.tenggat_waktu        || '',\n        tindakan_utama      : rr.tindakan_utama        || '',\n        pihak_yang_dihubungi: rr.pihak_yang_dihubungi || '',\n        langkah_dokumentasi : rr.langkah_dokumentasi  || ''\n      }\n    };\n  }).filter(Boolean) : [];\n\n} catch(e) {\n  result = {\n    bahasa_output : 'en',\n    metadata_kasus: { nama_pengirim: '', nomor_pengirim: '', timestamp_laporan: '', program: '', lokasi: '', level_laporan: '', urgensi_awal: '' },\n    duplikasi     : { status: false, ref_ticket: '', catatan: '' },\n    ringkasan     : 'Parse gagal: ' + e.message,\n    sinyal        : [], risiko: [], rekomendasi: [],\n    _parse_error  : e.message,\n    _raw_snippet  : raw.substring(0, 500)\n  };\n}\n\nreturn [{ json: result }];"
+      },
+      "id": "245b12e6-85d7-4595-b86d-51904837cdd8",
+      "name": "Fungsi: Parse JSON Sinyal",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        1920,
+        368
+      ]
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-flash-lite",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-flash-lite"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=PERAN: Kamu adalah analis intelijen kebijakan layanan anak (youth care) di Belanda dengan pengalaman 10+ tahun untuk OZJ.\n\nSUMBER DATA INPUT (dari Webhook manual ATAU WAHA):\n- Teks observasi: {{ $json.payload?.body || $('WAHA Trigger').item?.json?.payload?.body || '' }}\n- Nama pengirim: {{ $json.payload?._data?.notifyName || $('WAHA Trigger').item?.json?.payload?._data?.notifyName || '' }}\n- Nomor pengirim: {{ $json.payload?.from || $('WAHA Trigger').item?.json?.payload?.from || '' }}\n- Timestamp: {{ $json.payload?.timestamp || $('WAHA Trigger').item?.json?.payload?.timestamp || '' }}\n- Program: {{ $json.nama_program || '' }}\n- Lokasi: {{ $json.nama_lokasi || '' }}\n- Level laporan: {{ $json.level_laporan || '' }}\n- Urgensi laporan awal: {{ $json.urgensi_laporan || '' }}\n\nDETEKSI BAHASA:\n- Deteksi bahasa dari teks observasi secara otomatis\n- Bahasa yang didukung: Bahasa Indonesia (id), English (en), Nederlands (nl)\n- Jika bahasa tidak terdeteksi atau di luar 3 bahasa ini, gunakan English sebagai fallback\n- Seluruh nilai dalam JSON output HARUS menggunakan bahasa yang sama dengan input\n- Istilah hukum Belanda (Jeugdwet, Meldcode, Veilig Thuis, OTS, UHP, dll) TETAP dalam bahasa Belanda di semua output karena merupakan nama resmi\n\nPANDUAN TERJEMAHAN PER BAHASA:\n[Indonesia] ringkasan, deskripsi, tindakan, rekomendasi → Bahasa Indonesia | label level tetap: Mikro/Meso/Makro | urgensi: Rendah/Sedang/Tinggi\n[English]   ringkasan→summary, sinyal→signals, urgensi→urgency | level: Micro/Meso/Macro | urgency: Low/Medium/High\n[Nederlands] ringkasan→samenvatting, sinyal→signalen, urgensi→urgentie | level: Micro/Meso/Macro | urgentie: Laag/Gemiddeld/Hoog\n\nKERANGKA LEVEL (Klasifikasi Tiga Level):\n- Mikro: masalah level INDIVIDU/KELUARGA — kasus spesifik anak, pengalaman langsung profesional\n- Meso: masalah level ORGANISASI/REGIONAL — kolaborasi antar lembaga, kapasitas provider, jaringan regional\n- Makro: masalah level SISTEM/KEBIJAKAN — pola sistemik, legislasi Jeugdwet, pendanaan nasional\n\nKERANGKA HUKUM BELANDA (scoring urgensi):\n- Jeugdwet Art. 2.4: Gemeente wajib menyediakan jeugdhulp tepat waktu\n- Jeugdwet Art. 4.1.1: Meldcode — kewajiban profesional melaporkan kekerasan/verwaarlozing\n- Veilig Thuis: Acute gevaar vs structureel gevaar\n- UNCRC Art. 3: Kepentingan terbaik anak\n- Wet verplichte meldcode: Protokol 5 langkah pelaporan\n\nKATA KUNCI URGENSI TINGGI: kindermishandeling, verwaarlozing, huiselijk geweld, acute, spoed, OTS, UHP, uithuisplaatsing, seksueel misbruik, suicide, zelfbeschadiging\n\nINSTRUKSI:\n1. Deteksi bahasa input dari teks observasi, simpan kode bahasa di field \"bahasa_output\"\n2. Ekstrak dan sertakan metadata pengirim (nama, nomor, waktu) di field \"metadata_kasus\"\n3. Identifikasi sinyal kebijakan dari teks observasi\n4. Tentukan skor_urgensi_hukum (0-100): 90-100=bahaya akut anak, 70-89=Meldcode terpicu, 50-69=risiko sedang, 0-49=informatif\n5. Untuk setiap sinyal, tentukan rekomendasi_respons berdasarkan skor_urgensi_hukum:\n   - 90-100: tindakan segera dalam 24 jam (kontak Veilig Thuis/politie, aktivasi protokol darurat)\n   - 70-89: tindakan dalam 48-72 jam (Meldcode stap 4-5, konsultasi intern, dokumentasi)\n   - 50-69: tindakan dalam 1-2 minggu (monitoring, koordinasi tim, evaluasi berkala)\n   - 0-49: tindakan rutin/informatif (catat dalam dossier, agenda evaluasi reguler)\n6. Tulis SEMUA nilai teks dalam JSON menggunakan bahasa yang terdeteksi, kecuali istilah hukum Belanda resmi\n7. Kembalikan HANYA JSON valid tanpa markdown/backtick\n\nFORMAT (field names tetap dalam bahasa Inggris sebagai key JSON, hanya VALUE yang diterjemahkan):\n{\n  \"bahasa_output\": \"id|en|nl\",\n  \"metadata_kasus\": {\n    \"nama_pengirim\": \"\",\n    \"nomor_pengirim\": \"\",\n    \"timestamp_laporan\": \"\",\n    \"program\": \"\",\n    \"lokasi\": \"\",\n    \"level_laporan\": \"\",\n    \"urgensi_awal\": \"\"\n  },\n  \"ringkasan\": \"\",\n  \"sinyal\": [\n    {\n      \"judul\": \"\",\n      \"deskripsi\": \"\",\n      \"level\": \"Mikro|Meso|Makro / Micro|Meso|Macro\",\n      \"urgensi\": \"Rendah|Sedang|Tinggi / Low|Medium|High / Laag|Gemiddeld|Hoog\",\n      \"kategori\": \"\",\n      \"skor_urgensi_hukum\": 0,\n      \"dasar_hukum\": \"\",\n      \"rekomendasi_respons\": {\n        \"tenggat_waktu\": \"\",\n        \"tindakan_utama\": \"\",\n        \"pihak_yang_dihubungi\": \"\",\n        \"langkah_dokumentasi\": \"\"\n      }\n    }\n  ],\n  \"risiko\": [],\n  \"rekomendasi\": []\n}"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {
+          "maxOutputTokens": 2048,
+          "temperature": 0.2
+        }
+      },
+      "id": "8a14753c-f3f5-4866-a543-95892ebb99d4",
+      "name": "Gemini: Ekstraksi Sinyal dari Observasi",
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        1616,
+        368
+      ],
+      "credentials": {
+        "googlePalmApi": {
+          "id": "GcUgkzr5utJOcfYd",
+          "name": "Google Gemini(PaLM) Api account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "ozj-log-signal",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "f33aade9-28dd-42b6-b54c-fd570ae73f73",
+      "name": "Webhook: Input Manual Sinyal",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        944,
+        480
+      ],
+      "webhookId": "ozj-signal-log-manual-001"
+    },
+    {
+      "parameters": {},
+      "type": "@devlikeapro/n8n-nodes-waha.wahaTrigger",
+      "typeVersion": 202502,
+      "position": [
+        608,
+        160
+      ],
+      "id": "cfb53741-a8c0-404a-b77a-583a20cc0720",
+      "name": "WAHA Trigger",
+      "webhookId": "9621b3ae-83da-48a2-95ac-bc50ecfe8e50"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours"
+            }
+          ]
+        }
+      },
+      "id": "1fb5d41a-00bf-43bf-bcfc-4202be7447cb",
+      "name": "Jadwal: Ringkasan Harian (18:00)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        544,
+        1840
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "=https://docs.google.com/spreadsheets/d/1SmLv-fLtv2-nqUhzFOfjJsmRttOcY6eXtl0Nu5n11q4/edit?gid=0#gid=0",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "A1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1SmLv-fLtv2-nqUhzFOfjJsmRttOcY6eXtl0Nu5n11q4/edit#gid=0"
+        },
+        "options": {}
+      },
+      "id": "e4f21b89-c0a7-4bb4-9065-b37a7ff4d5e3",
+      "name": "Sheets: Baca Harian",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [
+        768,
+        1840
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "aeCUMk2aKMbOTDkY",
+          "name": "Google Sheets account Aiguide"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "functionCode": "const now     = new Date();\nconst todayStr = now.toISOString().slice(0, 10); // \"2026-03-10\"\n\n// ── Helper: normalize tanggal ke YYYY-MM-DD ──────────────────────────────────\nfunction toDateStr(str) {\n  if (!str) return '';\n  return String(str).trim().replace(' ', 'T').slice(0, 10);\n}\n\n// ── Helper: normalize level sinyal ke Mikro/Meso/Makro ──────────────────────\nfunction normalizeLevel(v) {\n  const map = {\n    'mikro'  : 'Mikro', 'micro'  : 'Mikro',\n    'meso'   : 'Meso',  'medium' : 'Meso',\n    'makro'  : 'Makro', 'macro'  : 'Makro'\n  };\n  return map[(v || '').toLowerCase()] || v || '—';\n}\n\n// ── Helper: normalize urgensi ke Rendah/Sedang/Tinggi ───────────────────────\nfunction normalizeUrgensi(v) {\n  const map = {\n    'rendah'    : 'Rendah', 'low'  : 'Rendah', 'laag'      : 'Rendah',\n    'sedang'    : 'Sedang', 'medium': 'Sedang', 'gemiddeld' : 'Sedang',\n    'tinggi'    : 'Tinggi', 'high' : 'Tinggi', 'hoog'      : 'Tinggi'\n  };\n  return map[(v || '').toLowerCase()] || v || '—';\n}\n\n// ── Filter: hanya tiket hari ini yang valid (punya ticket_id & status_ticket) ─\nconst today = items.filter(i => {\n  const d = i.json;\n  if (!d.ticket_id || !d.status_ticket) return false;          // skip row tidak lengkap\n  if (d.judul_sinyal === 'Tidak ada sinyal') return false;      // skip parse gagal\n  return toDateStr(d.waktu_catat) === todayStr;\n});\n\n// ── Hitung statistik ─────────────────────────────────────────────────────────\nlet mikro = 0, meso = 0, makro = 0;\nlet rendah = 0, sedang = 0, tinggi = 0;\nlet eskalasi = 0, open = 0;\n\ntoday.forEach(i => {\n  const d       = i.json;\n  const level   = normalizeLevel(d.level_sinyal);\n  const urgensi = normalizeUrgensi(d.urgensi_sinyal);\n\n  if (level   === 'Mikro')  mikro++;\n  if (level   === 'Meso')   meso++;\n  if (level   === 'Makro')  makro++;\n  if (urgensi === 'Rendah') rendah++;\n  if (urgensi === 'Sedang') sedang++;\n  if (urgensi === 'Tinggi') tinggi++;\n\n  if (d.status_ticket   === 'Open')      open++;\n  if (d.status_eskalasi === 'Escalated'\n   || d.status_eskalasi === 'Tinggi'\n   || d.status_eskalasi === 'KRITIS')    eskalasi++;\n});\n\n// ── Buat teks konteks untuk AI summary ──────────────────────────────────────\nconst teks_konteks = today\n  .filter(i => i.json.judul_sinyal)\n  .map(i => {\n    const d       = i.json;\n    const level   = normalizeLevel(d.level_sinyal);\n    const urgensi = normalizeUrgensi(d.urgensi_sinyal);\n    const skor    = d.skor_urgensi_hukum || 0;\n    const hukum   = d.dasar_hukum ? ` | ${d.dasar_hukum}` : '';\n    return `[${level}][${urgensi}][${skor}/100] ${d.judul_sinyal}: ${d.deskripsi_sinyal || '—'}${hukum}`;\n  })\n  .join('\\n');\n\n// ── Sumber breakdown ─────────────────────────────────────────────────────────\nconst dari_wa     = today.filter(i => i.json.jenis_sumber === 'whatsapp').length;\nconst dari_manual = today.filter(i => i.json.jenis_sumber === 'input-manual').length;\n\nreturn [{\n  json: {\n    tanggal       : todayStr,\n    total         : today.length,\n    // Level\n    mikro, meso, makro,\n    // Urgensi\n    rendah, sedang, tinggi,\n    // Status\n    open, eskalasi,\n    // Sumber\n    dari_wa, dari_manual,\n    // Untuk AI\n    teks_konteks\n  }\n}];"
+      },
+      "id": "50877937-29b5-4030-8198-00d58af67096",
+      "name": "Fungsi: Metrik Harian",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        992,
+        1840
+      ]
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-flash-lite",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-flash-lite"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=You are a youth care policy intelligence analyst in the Netherlands for OZJ.\n\nIMPORTANT LANGUAGE RULE:\nThe final report MUST be written entirely in English.\nDo not use Indonesian or Dutch except for official Dutch policy terms (Jeugdwet, Meldcode, Veilig Thuis, etc.).\n\nBelow is today’s signal summary ({{ $json.tanggal }}):\n\nSTATISTICS:\nTotal={{ $json.total }} | High={{ $json.tinggi }} | Medium={{ $json.sedang }} | Low={{ $json.rendah }}\nMicro={{ $json.mikro }} | Meso={{ $json.meso }} | Macro={{ $json.makro }}\nEscalations={{ $json.eskalasi }} | WA={{ $json.dari_wa }} | Manual={{ $json.dari_manual }}\n\nSIGNALS:\n{{ $json.teks_konteks }}\n\nTASK:\nCreate a SHORT daily report in English (max 800 characters) with this structure:\n\n🗓 *{{ $json.tanggal }}* | Total: {{ $json.total }} signals\n⚠️ *Priority:*\n[max 2 most critical signals, one line each]\n\n✅ *Actions:*\n[max 2 concrete actions, one line each]\n\n🔴 *Overall Urgency:* [Low/Medium/High/Critical]\n\nRULES:\n- Maximum 800 characters total\n- Dutch policy terms remain unchanged (Jeugdwet, Meldcode, Veilig Thuis)\n- No markdown bold, only WhatsApp *italic*\n- One line per point\n- No introduction or closing"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {
+          "maxOutputTokens": 1024,
+          "temperature": 0.3
+        }
+      },
+      "id": "b517af33-7415-43dd-a572-d5e50f9ded0d",
+      "name": "Gemini: Ringkasan Harian",
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        1184,
+        1840
+      ],
+      "credentials": {
+        "googlePalmApi": {
+          "id": "GcUgkzr5utJOcfYd",
+          "name": "Google Gemini(PaLM) Api account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "##  Daily Summary 18:00 via WhatsApp",
+        "height": 300,
+        "width": 1296,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        496,
+        1744
+      ],
+      "id": "6417aa74-883a-47ea-885c-30e2dac40587",
+      "name": "Sticky: Daily"
+    },
+    {
+      "parameters": {
+        "resource": "Chatting",
+        "operation": "Send Text",
+        "session": "=vano",
+        "chatId": "=6285641029363@c.us",
+        "text": "={{ $json.content.parts[0].text }}",
+        "requestOptions": {}
+      },
+      "type": "@devlikeapro/n8n-nodes-waha.WAHA",
+      "typeVersion": 202502,
+      "position": [
+        1536,
+        1840
+      ],
+      "id": "690c8a32-f06b-4159-9df8-702073c690a0",
+      "name": "Send a text message1",
+      "credentials": {
+        "wahaApi": {
+          "id": "4HTz9dpfphr9Kstl",
+          "name": "WAHA account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "Chatting",
+        "operation": "Send Text",
+        "session": "=vano",
+        "chatId": "={{ $json.payload._data.id.remote }}",
+        "text": "=👋 *Hello!* Thank you for contacting *OZJ System*.\n\nYour report has been received and is currently being processed by our AI system.\n\nPlease wait a moment, we will soon send you:\nYour report ticket number\nSignal analysis results\nUrgency level\n\n_OZJ Automated Support — together for the well-being of children_ 🙏",
+        "requestOptions": {}
+      },
+      "id": "490d4a45-97a9-4b01-8087-52bb2ba6bcc5",
+      "name": "WAHA: Auto-Reply Terima Kasih (Laporan Baru)",
+      "type": "@devlikeapro/n8n-nodes-waha.WAHA",
+      "typeVersion": 202502,
+      "position": [
+        960,
+        176
+      ],
+      "credentials": {
+        "wahaApi": {
+          "id": "4HTz9dpfphr9Kstl",
+          "name": "WAHA account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## SLA Escalation (30 min)",
+        "height": 640,
+        "width": 1976,
+        "color": 2
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        496,
+        1088
+      ],
+      "id": "59329527-2bf4-40c8-a94e-696afca395fd",
+      "name": "Sticky: SLA1"
+    },
+    {
+      "parameters": {
+        "dataType": "string",
+        "value1": "={{ $json.level_sinyal }}",
+        "rules": {
+          "rules": [
+            {
+              "value2": "Mikro"
+            },
+            {
+              "value2": "Meso",
+              "output": 1
+            },
+            {
+              "value2": "Makro",
+              "output": 2
+            }
+          ]
+        },
+        "fallbackOutput": 1
+      },
+      "id": "17a7e7fb-8021-45fd-ade8-36b0cc5e9f8d",
+      "name": "Switch: Level [0] WA | [1] Email | [2] VoiceCall+Email",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 1,
+      "position": [
+        2832,
+        336
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({status:\"sukses\",ticket_id:$json.ticket_id,urgensi:$json.urgensi_sinyal,skor:$json.skor_urgensi_hukum}) }}",
+        "options": {}
+      },
+      "id": "1acdecfc-af3b-4a12-beec-22c9dd151409",
+      "name": "Respons: Konfirmasi Input1",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        3632,
+        368
+      ]
+    },
+    {
+      "parameters": {
+        "sendTo": "stevanowahyu016@gmail.com",
+        "subject": "=[OZJ ALERT] {{ $json.judul_sinyal }} (Skor: {{ $json.skor_urgensi_hukum }})",
+        "message": "=<html>\n<body style=\"font-family:Arial;max-width:600px;margin:auto\">\n\n<div style=\"background:#c0392b;color:#fff;padding:20px;border-radius:8px 8px 0 0\">\n<h2 style=\"margin:0\">HIGH URGENCY SIGNAL</h2>\n<p style=\"margin:6px 0 0;font-size:13px;opacity:.85\">OZJ AI Signal Intelligence</p>\n</div>\n\n<div style=\"background:#f9f9f9;padding:24px;border:1px solid #ddd\">\n<p><b>Ticket:</b> {{ $json.ticket_id }}</p>\n<p><b>Title:</b> {{ $json.judul_sinyal }}</p>\n<p><b>Level:</b> {{ $json.level_sinyal }} | <b>Score:</b> {{ $json.skor_urgensi_hukum }}/100</p>\n<p><b>Description:</b> {{ $json.deskripsi_sinyal }}</p>\n<p><b>Risk:</b> {{ $json.risiko_teridentifikasi }}</p>\n<p><b>AI Recommendation:</b> {{ $json.rekomendasi_ai }}</p>\n</div>\n\n<div style=\"background:#ecf0f1;padding:12px;text-align:center;font-size:11px;color:#7f8c8d;border-radius:0 0 8px 8px\">\nSent automatically at {{ $json.waktu_catat }}\n</div>\n\n</body>\n</html>",
+        "options": {}
+      },
+      "id": "251ff1e4-5153-4168-af17-fa2773c9d260",
+      "name": "Gmail: Alert Urgensi Tinggi1",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2,
+      "position": [
+        3184,
+        352
+      ],
+      "webhookId": "cd323780-7e8d-4bd3-8ea6-8039042f5e32",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "5nzf5fzC75IkZhcE",
+          "name": "Gmail account Aiguide"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "Chatting",
+        "operation": "Send Text",
+        "session": "=vano",
+        "chatId": "={{ $json.wa_chat_id || '6285641029363@c.us' }}",
+        "text": "= *SIGNAL OZJ — Action*\n\n *Ticket:* {{ $json.ticket_id }}\n *Title:* {{ $json.judul_sinyal }}\n *Level:* {{ $json.level_sinyal }}\n *Urgency:* {{ $json.urgensi_sinyal }}\n *Score:* {{ $json.skor_urgensi_hukum }}/100\n\n {{ $json.deskripsi_sinyal }}\n\n *SLA Deadline:* {{ $json.waktu_eskalasi }}\n\n_OZJ Alert System_ ",
+        "requestOptions": {}
+      },
+      "id": "b42720fc-2439-447b-b340-ac61d768f620",
+      "name": "WAHA: Alert WhatsApp (Sedang)3",
+      "type": "@devlikeapro/n8n-nodes-waha.WAHA",
+      "typeVersion": 202502,
+      "position": [
+        3184,
+        160
+      ],
+      "credentials": {
+        "wahaApi": {
+          "id": "4HTz9dpfphr9Kstl",
+          "name": "WAHA account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://console.zenziva.net/voice/api/sendvoice/",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {}
+          ]
+        },
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "userkey",
+              "value": "d91dd4c519fd"
+            },
+            {
+              "name": "passkey",
+              "value": "84d771b20a0c9242e7dd9a4c"
+            },
+            {
+              "name": "to",
+              "value": "085641029363"
+            },
+            {
+              "name": "message",
+              "value": "=urgent cek  {{ $json.ticket_id }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "01e63bf7-92df-4eb0-8001-2748939d4cc2",
+      "name": "HTTP: zenziva Voice Call Alert6",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        3184,
+        592
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Node ini SELALU jalan karena trigger punya 1 item\n// Baca followup_log via Sheets API langsung — tidak bergantung pada jumlah baris\n// Return 1 item berisi logMap (kosong jika sheet belum ada data)\n\nconst logMap = {};\n\ntry {\n  // Ambil data dari sheet followup_log\n  const sheetItems = await this.helpers.requestWithAuthentication.call(\n    this,\n    'googleSheetsOAuth2Api',\n    {\n      method: 'GET',\n      url: 'https://sheets.googleapis.com/v4/spreadsheets/1SmLv-fLtv2-nqUhzFOfjJsmRttOcY6eXtl0Nu5n11q4/values/followup_log',\n      json: true\n    }\n  );\n\n  const rows = sheetItems.values || [];\n  // rows[0] = header: [ticket_id, followup_ke, sent_at, channel, judul_sinyal]\n  // rows[1+] = data\n  if (rows.length > 1) {\n    for (let i = 1; i < rows.length; i++) {\n      const row = rows[i];\n      const ticket_id = row[0];\n      const followup_ke = parseInt(row[1]);\n      if (!ticket_id || isNaN(followup_ke)) continue;\n      if (logMap[ticket_id] === undefined || followup_ke > logMap[ticket_id]) {\n        logMap[ticket_id] = followup_ke;\n      }\n    }\n  }\n} catch(e) {\n  // Sheet belum ada atau error — logMap tetap kosong, flow tetap jalan\n  console.log('followup_log kosong atau error:', e.message);\n}\n\nreturn [{ json: { logMap } }];"
+      },
+      "id": "4074232e-dd21-411a-94ab-6f87bfa19b5a",
+      "name": "Code: Baca + Agregasi Log",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        832,
+        1360
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "*/30 * * * *"
+            }
+          ]
+        }
+      },
+      "id": "a381468c-09b8-4439-996d-814370b72a93",
+      "name": "Jadwal: Cek SLA1",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        608,
+        1360
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "=https://docs.google.com/spreadsheets/d/1SmLv-fLtv2-nqUhzFOfjJsmRttOcY6eXtl0Nu5n11q4/edit?gid=0#gid=0",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "A1"
+        },
+        "options": {}
+      },
+      "id": "5d462288-bc30-43cd-b566-7f7cd19acb01",
+      "name": "Sheets: Baca Data SLA1",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [
+        1024,
+        1360
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "aeCUMk2aKMbOTDkY",
+          "name": "Google Sheets account Aiguide"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "functionCode": "const now = new Date();\n\nconst SLA_MAP = {\n  'Tinggi': 24, 'High': 24, 'Hoog': 24,\n  'Sedang': 48, 'Medium': 48, 'Gemiddeld': 48,\n  'Rendah': 168, 'Low': 168, 'Laag': 168\n};\nconst SLA_DEFAULT = 168;\nconst FOLLOWUP_WA_INTERVAL = 4;\nconst FOLLOWUP_CALL_JAM    = 24;\nconst MIN_URGENCY_SCORE    = 50;\n\nfunction parseDate(str) {\n  if (!str) return new Date(NaN);\n  const d = new Date(String(str).trim().replace(' ', 'T'));\n  return isNaN(d.getTime()) ? new Date(str) : d;\n}\nfunction toInt(v, def = 0) {\n  const n = parseInt(v); return isNaN(n) ? def : n;\n}\nfunction getBaseId(tid) {\n  const p = String(tid).split('-');\n  return p.length > 3 ? p.slice(0, 3).join('-') : tid;\n}\n\n// logMap dari node sebelumnya — selalu ada karena Code node selalu return 1 item\nconst logMap = $items('Code: Baca + Agregasi Log')[0].json.logMap || {};\n\n// De-duplikasi: pilih satu representatif per base_id (skor tertinggi)\nconst seen = new Map();\nfor (const item of items) {\n  const d = item.json;\n  if (!d.ticket_id) continue;\n  const base_id = getBaseId(d.ticket_id);\n  if (!seen.has(base_id)) {\n    seen.set(base_id, item);\n  } else if (toInt(d.skor_urgensi_hukum) > toInt(seen.get(base_id).json.skor_urgensi_hukum)) {\n    seen.set(base_id, item);\n  }\n}\n\nconst output = [];\nconst skipped = [];\n\nfor (const item of seen.values()) {\n  const d = item.json;\n  if (d.status_ticket === 'Closed')                     { skipped.push(d.ticket_id + ' [closed]'); continue; }\n  if (d.rekomendasi_keputusan?.trim())                  { skipped.push(d.ticket_id + ' [handled]'); continue; }\n  if (toInt(d.skor_urgensi_hukum) < MIN_URGENCY_SCORE) { skipped.push(d.ticket_id + ' [skor rendah]'); continue; }\n\n  const waktu_catat = parseDate(d.waktu_catat);\n  if (isNaN(waktu_catat.getTime()))                     { skipped.push(d.ticket_id + ' [invalid date]'); continue; }\n\n  const jam_berlalu   = (now - waktu_catat) / 3600000;\n  const sla_jam       = SLA_MAP[d.urgensi_sinyal] || SLA_DEFAULT;\n  const jam_terlambat = jam_berlalu - sla_jam;\n  const followup_ke   = Math.floor(jam_berlalu / FOLLOWUP_WA_INTERVAL);\n  const base_id       = getBaseId(d.ticket_id);\n\n  // Anti-spam: cek log\n  const followup_terakhir = logMap[base_id] !== undefined ? logMap[base_id] : -1;\n  if (followup_ke <= followup_terakhir) {\n    skipped.push(base_id + ' [fup-' + followup_ke + ' sudah dikirim, log=' + followup_terakhir + ']');\n    continue;\n  }\n\n  const perlu_telepon = jam_berlalu >= FOLLOWUP_CALL_JAM;\n  const channel       = perlu_telepon ? 'voice_call' : 'whatsapp';\n  const perlu_email   = true;\n\n  output.push({\n    json: {\n      ...d,\n      sla_jam,\n      jam_berlalu:      Math.round(jam_berlalu * 10) / 10,\n      terlambat_jam:    jam_terlambat > 0 ? Math.round(jam_terlambat * 10) / 10 : 0,\n      sisa_sla_jam:     jam_terlambat <= 0 ? Math.round((sla_jam - jam_berlalu) * 10) / 10 : 0,\n      followup_ke,\n      status_eskalasi:  jam_terlambat > 0 ? 'Escalated' : 'Follow-up',\n      eskalasi_channel: channel,\n      perlu_telepon,\n      perlu_email,\n      aksi_followup:    perlu_telepon\n        ? 'TELEPON - tidak ada respon ' + Math.round(jam_berlalu) + ' jam'\n        : 'Follow-up WA ke-' + followup_ke,\n      waktu_eskalasi:   now.toISOString(),\n      _log_base_id:     base_id,\n      _log_followup_ke: followup_ke,\n      _log_sent_at:     now.toISOString()\n    }\n  });\n}\n\nif (output.length === 0) {\n  return [{ json: { _skip: true, checked_at: now.toISOString(), skipped } }];\n}\n\n// Sort by skor_urgensi_hukum tertinggi, lalu ambil 1 saja\noutput.sort((a, b) => {\n  const skorB = toInt(b.json.skor_urgensi_hukum);\n  const skorA = toInt(a.json.skor_urgensi_hukum);\n  if (skorB !== skorA) return skorB - skorA;\n  // Jika skor sama, prioritaskan yang jam_berlalu lebih lama\n  return b.json.jam_berlalu - a.json.jam_berlalu;\n});\n\nconst MAX_PER_RUN = 1;\nreturn output.slice(0, MAX_PER_RUN);\nreturn output;"
+      },
+      "id": "458a298e-8db7-4b39-af84-c6c1f37f5beb",
+      "name": "Fungsi: Deteksi SLA Breach5",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        1232,
+        1360
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json._skip }}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "id": "47fad77e-4d66-497e-9b7a-1a6e1947cdb0",
+      "name": "IF: Skip?4",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        3408,
+        1648
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.perlu_telepon }}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "id": "2ccf6ab4-db81-4c54-b94c-5fd7a254b49d",
+      "name": "IF: Perlu Telepon?4",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        3440,
+        1616
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.perlu_email }}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "id": "6d6c1d2b-d4d2-40ed-9770-f96bb8394155",
+      "name": "IF: Perlu Email?2",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        4064,
+        1712
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://console.zenziv.com/api/voice-alert",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "ticket_id",
+              "value": "={{ $json.ticket_id }}"
+            },
+            {
+              "name": "message",
+              "value": "={{ $json.aksi_followup }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "aae413d5-6e9f-49c6-8353-fec7f5458a71",
+      "name": "HTTP: Zenziva Voice Call2",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1872,
+        1120
+      ]
+    },
+    {
+      "parameters": {
+        "sendTo": "stevanowahyu016@gmail.com",
+        "subject": "=[OZJ {{ ($json.status_eskalasi || 'ESKALASI').toUpperCase() }}] {{ $json.urgensi_sinyal }} — {{ $json.judul_sinyal }} | {{ $json.nama_lokasi || '-' }}",
+        "message": "=<html>\n<body style=\"font-family:Arial,sans-serif;max-width:600px;margin:auto;background:#f0f2f5;padding:20px\">\n\n<div style=\"background:{{ $json.skor_urgensi_hukum >= 90 ? '#c0392b' : $json.skor_urgensi_hukum >= 70 ? '#e74c3c' : '#e67e22' }};color:#fff;padding:20px 24px;border-radius:8px 8px 0 0\">\n<p style=\"margin:0 0 4px;font-size:12px;opacity:.85\">OZJ YOUTH CARE — ESCALATION NOTIFICATION</p>\n<h2 style=\"margin:0;font-size:20px\">SLA Alert: {{ $json.urgensi_sinyal }}</h2>\n<p style=\"margin:6px 0 0;font-size:13px\">{{ $json.ticket_id }} · {{ $json.nama_lokasi || '-' }}</p>\n</div>\n\n<div style=\"background:#fff;padding:24px;border:1px solid #ddd;border-top:none\">\n\n<table style=\"width:100%;border-collapse:collapse;margin-bottom:20px\">\n<tr style=\"background:#fdf3f3\">\n<td style=\"padding:10px;font-size:13px;color:#666;width:40%\">Title</td>\n<td style=\"padding:10px;font-weight:bold\">{{ $json.judul_sinyal }}</td>\n</tr>\n\n<tr>\n<td style=\"padding:10px;font-size:13px;color:#666\">Urgency Score</td>\n<td style=\"padding:10px;font-weight:bold;color:#c0392b\">{{ $json.skor_urgensi_hukum }}/100</td>\n</tr>\n\n<tr style=\"background:#fdf3f3\">\n<td style=\"padding:10px;font-size:13px;color:#666\">Legal Basis</td>\n<td style=\"padding:10px;font-size:13px\">{{ $json.dasar_hukum }}</td>\n</tr>\n</table>\n\n<div style=\"background:#fff8e1;border-left:4px solid #f39c12;padding:14px;margin-bottom:16px\">\n<p style=\"margin:0 0 4px;font-size:13px;font-weight:bold;color:#b7770d\">SLA Status</p>\n<p style=\"margin:0;font-size:13px\">\nDeadline: <b>{{ $json.sla_jam }}h</b> ·\nElapsed: <b>{{ $json.jam_berlalu }}h</b> ·\nOverdue: <b style=\"color:#c0392b\">{{ $json.terlambat_jam }}h</b>\n</p>\n</div>\n\n</div>\n\n<div style=\"background:#ecf0f1;padding:12px 24px;border-radius:0 0 8px 8px;border:1px solid #ddd;border-top:none;text-align:center\">\n<p style=\"margin:0;font-size:11px;color:#999\">OZJ · {{ $json.ticket_id }} · Please do not reply to this email</p>\n</div>\n\n</body>\n</html>",
+        "options": {}
+      },
+      "id": "254cb638-6c16-4a4a-a8d1-1d749d276004",
+      "name": "Gmail: Eskalasi SLA5",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2,
+      "position": [
+        1872,
+        1568
+      ],
+      "webhookId": "1bfeb6aa-010c-4ead-b7e9-4181a6afb194",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "5nzf5fzC75IkZhcE",
+          "name": "Gmail account Aiguide"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "=https://docs.google.com/spreadsheets/d/1SmLv-fLtv2-nqUhzFOfjJsmRttOcY6eXtl0Nu5n11q4/edit?gid=1656785731#gid=1656785731",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1656785731,
+          "mode": "list",
+          "cachedResultName": "followup_log",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1SmLv-fLtv2-nqUhzFOfjJsmRttOcY6eXtl0Nu5n11q4/edit#gid=1656785731"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "ticket_id",
+              "displayName": "ticket_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "followup_ke",
+              "displayName": "followup_ke",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "sent_at",
+              "displayName": "sent_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "channel",
+              "displayName": "channel",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "judul_sinyal",
+              "displayName": "judul_sinyal",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "ringkasan_sinyal",
+              "displayName": "ringkasan_sinyal",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "deskripsi_sinyal",
+              "displayName": "deskripsi_sinyal",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "level_sinyal",
+              "displayName": "level_sinyal",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "urgensi_sinyal",
+              "displayName": "urgensi_sinyal",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "kategori_sinyal",
+              "displayName": "kategori_sinyal",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "nama_program",
+              "displayName": "nama_program",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "nama_pelapor",
+              "displayName": "nama_pelapor",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "nama_lokasi",
+              "displayName": "nama_lokasi",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "risiko_teridentifikasi",
+              "displayName": "risiko_teridentifikasi",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "rekomendasi_ai",
+              "displayName": "rekomendasi_ai",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "jenis_sumber",
+              "displayName": "jenis_sumber",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "waktu_catat",
+              "displayName": "waktu_catat",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "wa_chat_id",
+              "displayName": "wa_chat_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "status_ticket",
+              "displayName": "status_ticket",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "status_eskalasi",
+              "displayName": "status_eskalasi",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "waktu_eskalasi",
+              "displayName": "waktu_eskalasi",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "rekomendasi_keputusan",
+              "displayName": "rekomendasi_keputusan",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "skor_urgensi_hukum",
+              "displayName": "skor_urgensi_hukum",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "dasar_hukum",
+              "displayName": "dasar_hukum",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "bahasa_output",
+              "displayName": "bahasa_output",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "nama_pengirim",
+              "displayName": "nama_pengirim",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "nomor_pengirim",
+              "displayName": "nomor_pengirim",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "level_laporan",
+              "displayName": "level_laporan",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "urgensi_awal",
+              "displayName": "urgensi_awal",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "timestamp_laporan_ai",
+              "displayName": "timestamp_laporan_ai",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "skor_urgensi_tertinggi",
+              "displayName": "skor_urgensi_tertinggi",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "sinyal_index",
+              "displayName": "sinyal_index",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "sinyal_total",
+              "displayName": "sinyal_total",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "rr_tenggat_waktu",
+              "displayName": "rr_tenggat_waktu",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "rr_tindakan_utama",
+              "displayName": "rr_tindakan_utama",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "rr_pihak_yang_dihubungi",
+              "displayName": "rr_pihak_yang_dihubungi",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "rr_langkah_dokumentasi",
+              "displayName": "rr_langkah_dokumentasi",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "sla_jam",
+              "displayName": "sla_jam",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "jam_berlalu",
+              "displayName": "jam_berlalu",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "terlambat_jam",
+              "displayName": "terlambat_jam",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "sisa_sla_jam",
+              "displayName": "sisa_sla_jam",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "eskalasi_channel",
+              "displayName": "eskalasi_channel",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "perlu_telepon",
+              "displayName": "perlu_telepon",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "perlu_email",
+              "displayName": "perlu_email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "aksi_followup",
+              "displayName": "aksi_followup",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "_log_base_id",
+              "displayName": "_log_base_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "_log_followup_ke",
+              "displayName": "_log_followup_ke",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "_log_sent_at",
+              "displayName": "_log_sent_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "15039309-2121-439c-8e39-bea406e807b6",
+      "name": "Sheets: Log WA2",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [
+        2144,
+        1568
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "aeCUMk2aKMbOTDkY",
+          "name": "Google Sheets account Aiguide"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "=https://docs.google.com/spreadsheets/d/1SmLv-fLtv2-nqUhzFOfjJsmRttOcY6eXtl0Nu5n11q4/edit?gid=1656785731#gid=1656785731",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1656785731,
+          "mode": "list",
+          "cachedResultName": "followup_log",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1SmLv-fLtv2-nqUhzFOfjJsmRttOcY6eXtl0Nu5n11q4/edit#gid=1656785731"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "ticket_id",
+              "displayName": "ticket_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "followup_ke",
+              "displayName": "followup_ke",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "sent_at",
+              "displayName": "sent_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "channel",
+              "displayName": "channel",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "judul_sinyal",
+              "displayName": "judul_sinyal",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "ringkasan_sinyal",
+              "displayName": "ringkasan_sinyal",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "deskripsi_sinyal",
+              "displayName": "deskripsi_sinyal",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "level_sinyal",
+              "displayName": "level_sinyal",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "urgensi_sinyal",
+              "displayName": "urgensi_sinyal",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "kategori_sinyal",
+              "displayName": "kategori_sinyal",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "nama_program",
+              "displayName": "nama_program",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "nama_pelapor",
+              "displayName": "nama_pelapor",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "nama_lokasi",
+              "displayName": "nama_lokasi",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "risiko_teridentifikasi",
+              "displayName": "risiko_teridentifikasi",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "rekomendasi_ai",
+              "displayName": "rekomendasi_ai",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "jenis_sumber",
+              "displayName": "jenis_sumber",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "waktu_catat",
+              "displayName": "waktu_catat",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "wa_chat_id",
+              "displayName": "wa_chat_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "status_ticket",
+              "displayName": "status_ticket",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "status_eskalasi",
+              "displayName": "status_eskalasi",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "waktu_eskalasi",
+              "displayName": "waktu_eskalasi",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "rekomendasi_keputusan",
+              "displayName": "rekomendasi_keputusan",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "skor_urgensi_hukum",
+              "displayName": "skor_urgensi_hukum",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "dasar_hukum",
+              "displayName": "dasar_hukum",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "bahasa_output",
+              "displayName": "bahasa_output",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "nama_pengirim",
+              "displayName": "nama_pengirim",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "nomor_pengirim",
+              "displayName": "nomor_pengirim",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "level_laporan",
+              "displayName": "level_laporan",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "urgensi_awal",
+              "displayName": "urgensi_awal",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "timestamp_laporan_ai",
+              "displayName": "timestamp_laporan_ai",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "skor_urgensi_tertinggi",
+              "displayName": "skor_urgensi_tertinggi",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "sinyal_index",
+              "displayName": "sinyal_index",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "sinyal_total",
+              "displayName": "sinyal_total",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "rr_tenggat_waktu",
+              "displayName": "rr_tenggat_waktu",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "rr_tindakan_utama",
+              "displayName": "rr_tindakan_utama",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "rr_pihak_yang_dihubungi",
+              "displayName": "rr_pihak_yang_dihubungi",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "rr_langkah_dokumentasi",
+              "displayName": "rr_langkah_dokumentasi",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "sla_jam",
+              "displayName": "sla_jam",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "jam_berlalu",
+              "displayName": "jam_berlalu",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "terlambat_jam",
+              "displayName": "terlambat_jam",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "sisa_sla_jam",
+              "displayName": "sisa_sla_jam",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "eskalasi_channel",
+              "displayName": "eskalasi_channel",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "perlu_telepon",
+              "displayName": "perlu_telepon",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "perlu_email",
+              "displayName": "perlu_email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "aksi_followup",
+              "displayName": "aksi_followup",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "_log_base_id",
+              "displayName": "_log_base_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "_log_followup_ke",
+              "displayName": "_log_followup_ke",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "_log_sent_at",
+              "displayName": "_log_sent_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "threadId",
+              "displayName": "threadId",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "labelIds",
+              "displayName": "labelIds",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "content",
+              "displayName": "content",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "finishReason",
+              "displayName": "finishReason",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "index",
+              "displayName": "index",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "be993ffc-e61f-40dd-9284-9f5ac019acd7",
+      "name": "Sheets: Log WA3",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [
+        2128,
+        1360
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "aeCUMk2aKMbOTDkY",
+          "name": "Google Sheets account Aiguide"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-flash-lite",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-flash-lite"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=You are an AI assistant used in a Youth Care monitoring system.\n\nTASK\nGenerate a WhatsApp / Email notification message in clear professional English using the provided JSON data.\n\nINSTRUCTIONS\n\n1. Translate any Indonesian text into English first.\n2. Keep institutional terms such as \"Veilig Thuis\", \"jeugdhulp\", \"gemeente\", and \"Meldcode\" unchanged.\n3. Use a concise and professional tone suitable for internal government or youth-care operations.\n4. Always use the EXACT notification structure below.\n5. Do not include emojis.\n6. If a field is empty, replace it with \"-\".\n7. Output ONLY the final notification text (plain text). Do not output JSON, markdown, code blocks, or explanations.\n\nMESSAGE FORMAT (MUST FOLLOW EXACTLY):\n\nFOLLOW-UP TICKET {{ $json.ticket_id }}\n\nSignal: {{ $json.judul_sinyal }}\nUrgency: {{ $json.urgensi_sinyal }} (Score: {{ $json.skor_urgensi_hukum }}/100)\nLegal Basis: {{ $json.dasar_hukum }}\n\nStatus: {{ $json.status_ticket }} — {{ $json.status_eskalasi }}\nSLA: {{ $json.sla_jam }} hours | Elapsed: {{ $json.jam_berlalu }} hours | Remaining: {{ $json.sisa_sla_jam }} hours\n\nFollow-up Action: {{ $json.aksi_followup }}\n\nDATA:\n{{ JSON.stringify($json, null, 2) }}\n"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {
+          "maxOutputTokens": 2048,
+          "temperature": 0.2
+        }
+      },
+      "id": "e25b134d-7fce-4d59-898e-fca54e54db08",
+      "name": "Gemini: Ekstraksi Sinyal dari Observasi1",
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        1424,
+        1360
+      ],
+      "credentials": {
+        "googlePalmApi": {
+          "id": "GcUgkzr5utJOcfYd",
+          "name": "Google Gemini(PaLM) Api account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "Chatting",
+        "operation": "Send Text",
+        "session": "vano",
+        "chatId": "6281575817391@c.us",
+        "text": "={{ $json.content.parts[0].text }}",
+        "requestOptions": {}
+      },
+      "id": "b477fb28-d2b6-4362-bad0-50da44b80926",
+      "name": "WAHA: Send Follow-up Message",
+      "type": "@devlikeapro/n8n-nodes-waha.WAHA",
+      "typeVersion": 202502,
+      "position": [
+        1872,
+        1360
+      ],
+      "credentials": {
+        "wahaApi": {
+          "id": "4HTz9dpfphr9Kstl",
+          "name": "WAHA account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Fungsi: Routing Skor Hukum": {
+      "main": [
+        [
+          {
+            "node": "Switch: Level [0] WA | [1] Email | [2] VoiceCall+Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sheets: Simpan Sinyal": {
+      "main": [
+        [
+          {
+            "node": "Fungsi: Routing Skor Hukum",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fungsi: Flatten Sinyal": {
+      "main": [
+        [
+          {
+            "node": "Sheets: Simpan Sinyal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fungsi: Parse JSON Sinyal": {
+      "main": [
+        [
+          {
+            "node": "Fungsi: Flatten Sinyal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini: Ekstraksi Sinyal dari Observasi": {
+      "main": [
+        [
+          {
+            "node": "Fungsi: Parse JSON Sinyal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook: Input Manual Sinyal": {
+      "main": [
+        [
+          {
+            "node": "Gemini: Ekstraksi Sinyal dari Observasi",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "WAHA Trigger": {
+      "main": [
+        [],
+        [
+          {
+            "node": "WAHA: Auto-Reply Terima Kasih (Laporan Baru)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Jadwal: Ringkasan Harian (18:00)": {
+      "main": [
+        [
+          {
+            "node": "Sheets: Baca Harian",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sheets: Baca Harian": {
+      "main": [
+        [
+          {
+            "node": "Fungsi: Metrik Harian",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fungsi: Metrik Harian": {
+      "main": [
+        [
+          {
+            "node": "Gemini: Ringkasan Harian",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini: Ringkasan Harian": {
+      "main": [
+        [
+          {
+            "node": "Send a text message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "WAHA: Auto-Reply Terima Kasih (Laporan Baru)": {
+      "main": [
+        [
+          {
+            "node": "Gemini: Ekstraksi Sinyal dari Observasi",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch: Level [0] WA | [1] Email | [2] VoiceCall+Email": {
+      "main": [
+        [
+          {
+            "node": "WAHA: Alert WhatsApp (Sedang)3",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Gmail: Alert Urgensi Tinggi1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "HTTP: zenziva Voice Call Alert6",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail: Alert Urgensi Tinggi1": {
+      "main": [
+        [
+          {
+            "node": "Respons: Konfirmasi Input1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "WAHA: Alert WhatsApp (Sedang)3": {
+      "main": [
+        [
+          {
+            "node": "Respons: Konfirmasi Input1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP: zenziva Voice Call Alert6": {
+      "main": [
+        [
+          {
+            "node": "Respons: Konfirmasi Input1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: Baca + Agregasi Log": {
+      "main": [
+        [
+          {
+            "node": "Sheets: Baca Data SLA1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Jadwal: Cek SLA1": {
+      "main": [
+        [
+          {
+            "node": "Code: Baca + Agregasi Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sheets: Baca Data SLA1": {
+      "main": [
+        [
+          {
+            "node": "Fungsi: Deteksi SLA Breach5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fungsi: Deteksi SLA Breach5": {
+      "main": [
+        [
+          {
+            "node": "Gemini: Ekstraksi Sinyal dari Observasi1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF: Skip?4": {
+      "main": [
+        [],
+        [
+          {
+            "node": "IF: Perlu Telepon?4",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "IF: Perlu Email?2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF: Perlu Telepon?4": {
+      "main": [
+        []
+      ]
+    },
+    "IF: Perlu Email?2": {
+      "main": [
+        []
+      ]
+    },
+    "HTTP: Zenziva Voice Call2": {
+      "main": [
+        []
+      ]
+    },
+    "Gmail: Eskalasi SLA5": {
+      "main": [
+        [
+          {
+            "node": "Sheets: Log WA2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sheets: Log WA2": {
+      "main": [
+        []
+      ]
+    },
+    "Gemini: Ekstraksi Sinyal dari Observasi1": {
+      "main": [
+        [
+          {
+            "node": "HTTP: Zenziva Voice Call2",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "WAHA: Send Follow-up Message",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Gmail: Eskalasi SLA5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "WAHA: Send Follow-up Message": {
+      "main": [
+        [
+          {
+            "node": "Sheets: Log WA3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "69330fbd-c946-4a8c-b930-b6d3e1cb9c7f",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "312a34c428f25f2a3c133770e3a7e104621df01202cf22fd47ee9076b135741b"
+  },
+  "id": "9hEsMI8X9mRLxiwG",
+  "tags": []
+}

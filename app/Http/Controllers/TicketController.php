@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\Ticket;
 use App\Models\TicketAction;
 use App\Services\GoogleSheetsService;
-use App\Services\N8nSignalForwarder;
 use App\Services\TicketSheetImporter;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -143,8 +142,8 @@ class TicketController extends Controller
     }
 
     /**
-     * Input manual dari web: hanya dikirim ke webhook n8n.
-     * Data tidak disimpan ke DB di sini; setelah n8n menyimpan ke spreadsheet, data dibaca di website via sync Sheet → DB.
+     * Input manual dari web: langsung ke Google Sheet (tanpa n8n), lalu sync Sheet → DB.
+     * Data tampil di daftar tiket setelah sync dari CSV.
      */
     public function store(Request $request)
     {
@@ -155,28 +154,46 @@ class TicketController extends Controller
             'urgensi_sinyal' => 'required|string',
         ]);
 
-        $url = config('services.n8n.signal_webhook_url');
-        if (! $url || $url === '') {
+        $spreadsheetId = config('services.google.spreadsheet_id');
+        $credentialsPath = config('services.google.credentials_path');
+        $hasGoogle = $spreadsheetId && $credentialsPath && file_exists(base_path($credentialsPath));
+
+        if (! $hasGoogle) {
             return response()->json([
-                'message' => 'Webhook n8n belum dikonfigurasi. Set N8N_SIGNAL_WEBHOOK_URL di .env.',
+                'message' => 'Google Sheets belum dikonfigurasi. Set GOOGLE_SHEETS_SPREADSHEET_ID dan GOOGLE_APPLICATION_CREDENTIALS di .env.',
             ], 503);
         }
 
-        $result = app(N8nSignalForwarder::class)->sendFromRequest($request->all());
-
-        if (! $result['success']) {
+        if (! config('services.google.sync_enabled', true)) {
             return response()->json([
-                'message' => $result['message'],
-            ], $result['status'] >= 400 ? $result['status'] : 502);
+                'message' => 'Sinkron ke Google Sheets dinonaktifkan (GOOGLE_SHEETS_SYNC_ENABLED=false).',
+            ], 503);
         }
 
-        $body = $result['body'] ?? [];
+        try {
+            $ticketId = app(GoogleSheetsService::class)->appendManualTicket($request->all());
+        } catch (\Throwable $e) {
+            Log::warning('Append manual ticket ke Sheet gagal', ['message' => $e->getMessage()]);
+
+            return response()->json([
+                'message' => 'Gagal menulis ke spreadsheet: '.$e->getMessage(),
+            ], 502);
+        }
+
+        $csvUrl = config('services.ozj_sheets.tickets_csv_url');
+        if ($csvUrl) {
+            try {
+                $this->sheetImporter()->syncFromCsv($csvUrl);
+            } catch (\Throwable $e) {
+                Log::warning('Sync dari Sheet setelah append manual gagal', ['message' => $e->getMessage()]);
+                // Tetap sukses: data sudah di Sheet, DB akan kejar saat index/track/dashboard
+            }
+        }
+
         $payload = [
-            'message' => $result['message'],
-            'ticket_id' => $body['ticket_id'] ?? null,
-            'status' => $body['status'] ?? 'sukses',
-            'urgensi' => $body['urgensi'] ?? null,
-            'skor' => $body['skor'] ?? null,
+            'message' => 'Laporan berhasil disimpan ke spreadsheet. Data akan tampil di daftar tiket.',
+            'ticket_id' => $ticketId,
+            'status' => 'sukses',
         ];
 
         if (! $request->expectsJson()) {

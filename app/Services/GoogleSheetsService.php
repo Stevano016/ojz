@@ -127,6 +127,89 @@ class GoogleSheetsService
     }
 
     /**
+     * Append satu baris dari input manual (form web) langsung ke spreadsheet.
+     * Tidak lewat n8n. Kolom mengikuti header yang sudah ada di sheet.
+     *
+     * @param  array<string, mixed>  $data  Data dari request (judul_sinyal, deskripsi_sinyal, level_sinyal, urgensi_sinyal, nama_pelapor, nama_lokasi, nama_program, kategori_sinyal, dll.)
+     * @return string ticket_id yang di-generate (OZJ-YYYYMMDD-XXXX)
+     */
+    public function appendManualTicket(array $data): string
+    {
+        $response = $this->service->spreadsheets_values->get($this->spreadsheetId, $this->ticketsRange);
+        $values = $response->getValues() ?? [];
+
+        if (count($values) === 0) {
+            throw new \RuntimeException('Sheet kosong atau range tidak ditemukan. Tambahkan header baris pertama (ticket_id, judul_sinyal, dll).');
+        }
+
+        $headers = $values[0];
+        $ticketId = 'OZJ-'.date('Ymd').'-'.random_int(1000, 9999);
+        $row = $this->buildRowFromManualData($headers, $data, $ticketId);
+        $row = array_values(array_map(function ($v) {
+            return $v === null ? '' : (string) $v;
+        }, $row));
+
+        $this->appendValuesViaHttp([$row]);
+
+        return $ticketId;
+    }
+
+    /**
+     * Build satu baris untuk sheet dari data input manual (urutan mengikuti headers).
+     *
+     * @param  array<int, string>  $headers
+     * @param  array<string, mixed>  $data
+     * @return array<int, string|null>
+     */
+    private function buildRowFromManualData(array $headers, array $data, string $ticketId): array
+    {
+        $now = (new \DateTimeImmutable)->format('Y-m-d\TH:i:s.000\Z');
+        $defaults = [
+            'ringkasan_sinyal' => $data['judul_sinyal'] ?? '',
+            'judul_sinyal' => $data['judul_sinyal'] ?? '',
+            'deskripsi_sinyal' => $data['deskripsi_sinyal'] ?? '',
+            'level_sinyal' => $data['level_sinyal'] ?? '',
+            'urgensi_sinyal' => $data['urgensi_sinyal'] ?? '',
+            'kategori_sinyal' => $data['kategori_sinyal'] ?? '',
+            'nama_program' => $data['nama_program'] ?? '',
+            'nama_pelapor' => $data['nama_pelapor'] ?? $data['nama_pengirim'] ?? '',
+            'nama_lokasi' => $data['nama_lokasi'] ?? '',
+            'risiko_teridentifikasi' => $data['risiko_teridentifikasi'] ?? '',
+            'rekomendasi_ai' => $data['rekomendasi_ai'] ?? '',
+            'jenis_sumber' => 'input-manual',
+            'waktu_catat' => $now,
+            'ticket_id' => $ticketId,
+            'wa_chat_id' => $data['nomor_pengirim'] ?? $data['wa_chat_id'] ?? '',
+            'status_ticket' => 'Open',
+            'status_eskalasi' => $data['status_eskalasi'] ?? 'Normal',
+            'waktu_eskalasi' => '',
+            'rekomendasi_keputusan' => '',
+            'skor_urgensi_hukum' => (string) ($data['skor_urgensi_hukum'] ?? 0),
+            'dasar_hukum' => '',
+            'bahasa_output' => 'id',
+            'nama_pengirim' => $data['nama_pelapor'] ?? $data['nama_pengirim'] ?? '',
+            'nomor_pengirim' => $data['nomor_pengirim'] ?? '',
+            'level_laporan' => $data['level_laporan'] ?? $data['level_sinyal'] ?? '',
+            'urgensi_awal' => $data['urgensi_awal'] ?? $data['urgensi_sinyal'] ?? '',
+            'timestamp_laporan_ai' => '',
+            'skor_urgensi_tertinggi' => (string) ($data['skor_urgensi_hukum'] ?? $data['skor_urgensi_tertinggi'] ?? 0),
+            'sinyal_index' => '1',
+            'sinyal_total' => '1',
+            'rr_tenggat_waktu' => '',
+            'rr_tindakan_utama' => '',
+            'rr_pihak_yang_dihubungi' => '',
+            'rr_langkah_dokumentasi' => '',
+        ];
+
+        $row = [];
+        foreach ($headers as $header) {
+            $row[] = $defaults[$header] ?? '';
+        }
+
+        return $row;
+    }
+
+    /**
      * Kirim request ke Sheets API dengan auth dari Google Client.
      */
     private function sheetsRequest(string $method, string $url, string $jsonBody): void
