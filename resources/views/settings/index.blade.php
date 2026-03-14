@@ -9,9 +9,6 @@
         <p class="text-sm text-slate-400 mt-1 max-w-2xl">{{ __('settings_intro') }}</p>
     </div>
 
-    @if(session('success'))
-        <div class="rounded-lg bg-emerald-950/50 border border-emerald-700/60 px-4 py-3 text-sm text-emerald-200">{{ session('success') }}</div>
-    @endif
     @if(session('error'))
         <div class="rounded-lg bg-rose-950/50 border border-rose-700/60 px-4 py-3 text-sm text-rose-200">{{ session('error') }}</div>
     @endif
