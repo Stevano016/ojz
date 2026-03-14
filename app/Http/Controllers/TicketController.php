@@ -205,6 +205,7 @@ class TicketController extends Controller
             $ticket->update(['status_ticket' => $request->new_status]);
         }
 
+        set_time_limit(65);
         [$sheetSynced, $sheetError] = $this->syncTicketToSheets($ticket->fresh());
 
         $response = $action->load('user')->toArray();
