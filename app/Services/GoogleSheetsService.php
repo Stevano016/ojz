@@ -5,7 +5,6 @@ namespace App\Services;
 use App\Models\Ticket;
 use Google\Client;
 use Google\Service\Sheets;
-use Google\Service\Sheets\ValueRange;
 use GuzzleHttp\Client as GuzzleClient;
 
 class GoogleSheetsService
@@ -79,37 +78,75 @@ class GoogleSheetsService
         }
 
         $rowData = $this->mapTicketToRow($ticket, $headers);
+        // Konversi ke list dan cast nilai agar JSON encode jadi array [...], bukan object {"0":...}
+        $rowData = array_values(array_map(function ($v) {
+            return $v === null ? '' : (string) $v;
+        }, $rowData));
 
         if ($rowIndex !== null) {
-            // Update existing row
+            // Update existing row — kirim request langsung agar values tetap array di JSON
             $startCol = 'A';
             $endCol = $this->columnLetter(count($headers));
             $range = sprintf('%s!%s%d:%s%d', $sheetName, $startCol, $rowIndex, $endCol, $rowIndex);
-
-            $body = new ValueRange([
-                'range' => $range,
-                'values' => [$rowData],
-            ]);
-
-            $this->service->spreadsheets_values->update(
-                $this->spreadsheetId,
-                $range,
-                $body,
-                ['valueInputOption' => 'RAW'],
-            );
+            $this->updateValuesViaHttp($range, [$rowData]);
         } else {
             // Append new row
-            $body = new ValueRange([
-                'values' => [$rowData],
-            ]);
-
-            $this->service->spreadsheets_values->append(
-                $this->spreadsheetId,
-                $this->ticketsRange,
-                $body,
-                ['valueInputOption' => 'RAW'],
-            );
+            $this->appendValuesViaHttp([$rowData]);
         }
+    }
+
+    /**
+     * Update range via REST API dengan body JSON yang kita kontrol (values = array of arrays).
+     */
+    private function updateValuesViaHttp(string $range, array $values): void
+    {
+        $url = sprintf(
+            'https://sheets.googleapis.com/v4/spreadsheets/%s/values/%s?valueInputOption=RAW',
+            $this->spreadsheetId,
+            rawurlencode($range)
+        );
+        $body = json_encode([
+            'range' => $range,
+            'values' => $values,
+        ]);
+        $this->sheetsRequest('PUT', $url, $body);
+    }
+
+    /**
+     * Append rows via REST API dengan body JSON yang kita kontrol.
+     */
+    private function appendValuesViaHttp(array $values): void
+    {
+        $url = sprintf(
+            'https://sheets.googleapis.com/v4/spreadsheets/%s/values/%s:append?valueInputOption=RAW',
+            $this->spreadsheetId,
+            rawurlencode($this->ticketsRange)
+        );
+        $body = json_encode(['values' => $values]);
+        $this->sheetsRequest('POST', $url, $body);
+    }
+
+    /**
+     * Kirim request ke Sheets API dengan auth dari Google Client.
+     */
+    private function sheetsRequest(string $method, string $url, string $jsonBody): void
+    {
+        $client = $this->service->getClient();
+        if (! $client->getAccessToken()) {
+            $client->fetchAccessTokenWithAssertion();
+        }
+        $token = $client->getAccessToken()['access_token'] ?? null;
+        if (! $token) {
+            throw new \RuntimeException('Could not obtain Google API access token.');
+        }
+        $http = $client->getHttpClient();
+        $http->request($method, $url, [
+            'headers' => [
+                'Authorization' => 'Bearer '.$token,
+                'Content-Type' => 'application/json',
+            ],
+            'body' => $jsonBody,
+        ]);
     }
 
     /**

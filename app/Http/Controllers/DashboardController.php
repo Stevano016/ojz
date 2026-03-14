@@ -14,7 +14,10 @@ class DashboardController extends Controller
     {
     }
 
-    public function stats()
+    /**
+     * Data stats untuk JSON API atau Blade view.
+     */
+    public function getStatsData(): array
     {
         $csvUrl = config('services.ozj_sheets.tickets_csv_url');
         if ($csvUrl) {
@@ -93,7 +96,7 @@ class DashboardController extends Controller
             ->take(30)
             ->get();
 
-        return response()->json([
+        return [
             'summary' => [
                 'total' => $totalTickets,
                 'open' => $openTickets,
@@ -110,6 +113,16 @@ class DashboardController extends Controller
             'score_distribution' => $scoreDistribution,
             'recent_tickets' => $recentTickets,
             'tickets_by_date' => $ticketsByDate,
-        ]);
+        ];
+    }
+
+    public function stats()
+    {
+        return response()->json($this->getStatsData());
+    }
+
+    public function index()
+    {
+        return view('dashboard', ['stats' => $this->getStatsData()]);
     }
 }

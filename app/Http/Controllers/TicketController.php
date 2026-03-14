@@ -26,6 +26,36 @@ class TicketController extends Controller
     }
 
     /**
+     * Halaman Blade: form buat tiket manual.
+     */
+    public function create()
+    {
+        return view('tickets.create');
+    }
+
+    /**
+     * Halaman Blade: cek status tiket (public).
+     */
+    public function trackPage(Request $request, $ticket_id = null)
+    {
+        $ticket = null;
+        $ticketId = $ticket_id ?? $request->get('ticket_id');
+        if ($ticketId) {
+            $csvUrl = config('services.ozj_sheets.tickets_csv_url');
+            if ($csvUrl) {
+                try {
+                    $this->sheetImporter()->syncFromCsv($csvUrl);
+                } catch (\Throwable $e) {
+                    // lanjut baca dari DB
+                }
+            }
+            $ticket = Ticket::where('ticket_id', $ticketId)->first();
+        }
+
+        return view('track', compact('ticket'));
+    }
+
+    /**
      * Tracking tiket untuk pelapor (public, tanpa auth).
      * Data di-sync dari Sheet dulu agar status terbaru.
      */
@@ -100,7 +130,14 @@ class TicketController extends Controller
         $sortDir = $request->get('sort_dir', 'desc');
         $query->orderBy($sortBy, $sortDir);
 
-        $tickets = $query->paginate($request->get('per_page', 10));
+        $tickets = $query->paginate($request->get('per_page', 10))->withQueryString();
+
+        if (! $request->expectsJson()) {
+            return view('tickets.index', [
+                'tickets' => $tickets,
+                'filters' => $request->only('status', 'urgency', 'level', 'search'),
+            ]);
+        }
 
         return response()->json($tickets);
     }
@@ -134,18 +171,30 @@ class TicketController extends Controller
         }
 
         $body = $result['body'] ?? [];
-        return response()->json([
+        $payload = [
             'message' => $result['message'],
             'ticket_id' => $body['ticket_id'] ?? null,
             'status' => $body['status'] ?? 'sukses',
             'urgensi' => $body['urgensi'] ?? null,
             'skor' => $body['skor'] ?? null,
-        ], 202);
+        ];
+
+        if (! $request->expectsJson()) {
+            return redirect()->route('tickets.create')
+                ->with('create_success', $payload);
+        }
+
+        return response()->json($payload, 202);
     }
 
     public function show($id)
     {
         $ticket = Ticket::with(['actions.user'])->findOrFail($id);
+
+        if (! request()->expectsJson()) {
+            return view('tickets.show', compact('ticket'));
+        }
+
         return response()->json($ticket);
     }
 
@@ -180,6 +229,13 @@ class TicketController extends Controller
             $ticket->sheet_sync_error = $sheetError;
         }
 
+        if (! $request->expectsJson()) {
+            return redirect()->route('tickets.show', $ticket->id)
+                ->with('success', 'Status diperbarui.')
+                ->with('sheet_synced', $sheetSynced)
+                ->with('sheet_sync_error', $sheetError);
+        }
+
         return response()->json($ticket);
     }
 
@@ -208,6 +264,13 @@ class TicketController extends Controller
         set_time_limit(65);
         [$sheetSynced, $sheetError] = $this->syncTicketToSheets($ticket->fresh());
 
+        if (! $request->expectsJson()) {
+            return redirect()->back()
+                ->with('success', 'Aksi ditambahkan.')
+                ->with('sheet_synced', $sheetSynced)
+                ->with('sheet_sync_error', $sheetError);
+        }
+
         $response = $action->load('user')->toArray();
         $response['sheet_synced'] = $sheetSynced;
         if ($sheetError !== null) {
@@ -222,6 +285,9 @@ class TicketController extends Controller
      */
     private function syncTicketToSheets(Ticket $ticket): array
     {
+        if (! config('services.google.sync_enabled', true)) {
+            return [false, 'Sinkron ke Google Sheets dinonaktifkan (GOOGLE_SHEETS_SYNC_ENABLED=false).'];
+        }
         try {
             app(GoogleSheetsService::class)->syncTicket($ticket);
             return [true, null];
