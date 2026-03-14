@@ -9,9 +9,12 @@
     <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600,700" rel="stylesheet" />
     <style>body { font-family: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif; }</style>
 </head>
-<body class="min-h-screen bg-slate-950 flex flex-col items-center justify-center px-4 py-8">
-    @include('partials.locale-switcher')
-    <div class="w-full max-w-md space-y-6">
+<body class="min-h-screen bg-slate-950 text-slate-100">
+    <div class="min-h-screen flex flex-col items-center justify-center px-4 py-8 relative">
+        <div class="absolute top-4 right-4">
+            @include('partials.locale-switcher')
+        </div>
+        <div class="w-full max-w-md space-y-6">
         <div class="text-center">
             <div class="inline-flex h-12 w-12 rounded-2xl bg-gradient-to-br from-amber-400 via-orange-500 to-rose-500 items-center justify-center shadow-lg shadow-amber-500/30 mb-3">
                 <span class="text-lg font-black tracking-tight text-slate-950">OZJ</span>
@@ -80,5 +83,6 @@
         @endif
     </div>
     <p class="mt-6 text-xs text-slate-500">{{ __('track_footer') }} <a href="{{ route('login') }}" class="text-amber-400/80 hover:text-amber-300">{{ __('login_admin') }}</a></p>
+    </div>
 </body>
 </html>

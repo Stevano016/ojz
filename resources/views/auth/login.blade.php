@@ -9,9 +9,12 @@
     <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600,700" rel="stylesheet" />
     <style>body { font-family: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif; }</style>
 </head>
-<body class="min-h-screen bg-slate-950 flex items-center justify-center px-4">
-    @include('partials.locale-switcher')
-    <div class="max-w-md w-full">
+<body class="min-h-screen bg-slate-950 text-slate-100">
+    <div class="min-h-screen flex items-center justify-center px-4 py-8 relative">
+        <div class="absolute top-4 right-4">{{-- ikut scroll dengan halaman --}}
+            @include('partials.locale-switcher')
+        </div>
+        <div class="max-w-md w-full">
         <div class="mb-6 flex flex-col items-center gap-2 text-center">
             <img src="{{ asset('images/ozj-logo.png') }}" alt="OZJ - AI Signal Intelligence" class="h-16 w-auto object-contain" />
             <div class="flex flex-col">
@@ -48,6 +51,7 @@
                     {{ __('back_to_home') }}
                 </a>
             </div>
+        </div>
         </div>
     </div>
 </body>

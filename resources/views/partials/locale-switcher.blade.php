@@ -9,10 +9,10 @@
         $current = 'en';
     }
 @endphp
-<div class="fixed top-12 right-4 z-50 flex items-center gap-2" role="group" aria-label="Language">
+<div class="flex items-center gap-1.5 shrink-0" role="group" aria-label="Language">
     @foreach($locales as $code => $info)
         <a href="{{ route('locale.switch', $code) }}"
-           class="flex h-10 w-10 items-center justify-center rounded-full border-2 bg-slate-900/90 shadow-lg backdrop-blur-sm transition hover:scale-110 focus:outline-none focus:ring-2 focus:ring-amber-400 {{ $current === $code ? 'border-amber-400 ring-2 ring-amber-400/30' : 'border-slate-600 hover:border-slate-500' }}"
+           class="flex h-8 w-8 items-center justify-center rounded-full border-2 bg-slate-800/80 border-slate-600 transition hover:scale-105 focus:outline-none focus:ring-2 focus:ring-amber-400 {{ $current === $code ? 'border-amber-400 ring-2 ring-amber-400/30' : 'hover:border-slate-500' }}"
            title="{{ $info['name'] }}"
            aria-label="{{ $info['name'] }}">
             <span class="text-lg leading-none" aria-hidden="true">{{ $info['flag'] }}</span>

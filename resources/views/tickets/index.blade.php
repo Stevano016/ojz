@@ -23,14 +23,13 @@
 
     {{-- Petunjuk singkat --}}
     <div class="rounded-xl border border-slate-700/60 bg-slate-800/50 px-4 py-3 text-sm text-slate-300">
-        <span class="font-medium text-slate-200">Cara download: </span>
-        Centang tiket di kolom <strong class="text-amber-200/90">Pilih</strong> → klik <strong class="text-violet-200">Unduh Tiket Terpilih</strong>. Atau klik <strong class="text-sky-200">📥 Unduh</strong> per baris untuk satu tiket.
+        {{ __('tickets_download_howto') }}
     </div>
 
     <div class="rounded-2xl bg-slate-900/60 border border-slate-700/80 shadow-xl shadow-black/20 overflow-hidden">
         <form method="GET" action="{{ route('tickets.index') }}" class="px-4 py-3 border-b border-slate-700/80 bg-slate-800/30">
             <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-                <span class="text-xs font-medium uppercase tracking-wider text-slate-400">Filter</span>
+                <span class="text-xs font-medium uppercase tracking-wider text-slate-400">{{ __('tickets_filter_label') }}</span>
                 <div class="flex flex-wrap items-center gap-2">
                 <select name="status" class="bg-slate-900/80 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-400/50">
                     <option value="all" {{ ($filters['status'] ?? '') === 'all' ? 'selected' : '' }}>{{ __('tickets_filter_status_all') }}</option>
@@ -48,9 +47,9 @@
                 </select>
                 <select name="level" class="bg-slate-900/80 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-400/50">
                     <option value="all" {{ ($filters['level'] ?? '') === 'all' ? 'selected' : '' }}>{{ __('tickets_filter_level_all') }}</option>
-                    <option value="Mikro" {{ ($filters['level'] ?? '') === 'Mikro' ? 'selected' : '' }}>Mikro</option>
-                    <option value="Meso" {{ ($filters['level'] ?? '') === 'Meso' ? 'selected' : '' }}>Meso</option>
-                    <option value="Makro" {{ ($filters['level'] ?? '') === 'Makro' ? 'selected' : '' }}>Makro</option>
+                    <option value="Mikro" {{ ($filters['level'] ?? '') === 'Mikro' ? 'selected' : '' }}>{{ __('tickets_level_mikro') }}</option>
+                    <option value="Meso" {{ ($filters['level'] ?? '') === 'Meso' ? 'selected' : '' }}>{{ __('tickets_level_meso') }}</option>
+                    <option value="Makro" {{ ($filters['level'] ?? '') === 'Makro' ? 'selected' : '' }}>{{ __('tickets_level_makro') }}</option>
                 </select>
                 <input type="text" name="search" value="{{ $filters['search'] ?? '' }}" placeholder="{{ __('tickets_search_placeholder') }}"
                     class="min-w-[180px] bg-slate-900/80 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-400/50" />
@@ -66,7 +65,7 @@
                 <thead>
                     <tr class="bg-slate-800/80 text-xs uppercase tracking-wider text-slate-400 border-b border-slate-700/80">
                         <th class="px-4 py-3 w-12 text-center">
-                            <input type="checkbox" id="select-all-tickets" class="rounded border-slate-600 bg-slate-800 text-amber-500 focus:ring-amber-400/70" title="Pilih semua">
+                            <input type="checkbox" id="select-all-tickets" class="rounded border-slate-600 bg-slate-800 text-amber-500 focus:ring-amber-400/70" title="{{ __('tickets_select_all') }}">
                         </th>
                         <th class="px-4 py-3 font-medium">{{ __('tickets_th_ticket') }}</th>
                         <th class="px-4 py-3 font-medium">{{ __('tickets_th_status') }}</th>
@@ -82,7 +81,7 @@
                     @forelse($tickets as $t)
                         <tr class="bg-slate-900/40 hover:bg-slate-800/60 transition-colors">
                             <td class="px-4 py-3 align-middle text-center">
-                                <input type="checkbox" name="ids[]" value="{{ $t->id }}" class="ticket-checkbox rounded border-slate-600 bg-slate-800 text-amber-500 focus:ring-amber-400/70" title="Pilih untuk download">
+                                <input type="checkbox" name="ids[]" value="{{ $t->id }}" class="ticket-checkbox rounded border-slate-600 bg-slate-800 text-amber-500 focus:ring-amber-400/70" title="{{ __('tickets_select_for_download') }}">
                             </td>
                             <td class="px-4 py-3 align-middle">
                                 <a href="{{ route('tickets.show', $t->id) }}" class="text-xs font-medium text-sky-300 hover:text-sky-200">{{ $t->ticket_id }}</a>
@@ -115,7 +114,7 @@
                             </td>
                             <td class="px-4 py-3 align-middle text-slate-300 text-xs whitespace-nowrap">{{ $t->waktu_catat ? $t->waktu_catat->format('d/m/Y H:i') : '—' }}</td>
                             <td class="px-4 py-3 align-middle text-right">
-                                <a href="{{ route('export.per-ticket', ['ticket_id' => $t->ticket_id]) }}" class="inline-flex items-center gap-1 rounded-lg border border-slate-600 bg-slate-800/80 px-2.5 py-1.5 text-xs font-medium text-sky-300 hover:bg-sky-500/20 hover:border-sky-500/40 transition mr-1.5">📥 Unduh</a>
+                                <a href="{{ route('export.per-ticket', ['ticket_id' => $t->ticket_id]) }}" class="inline-flex items-center gap-1 rounded-lg border border-slate-600 bg-slate-800/80 px-2.5 py-1.5 text-xs font-medium text-sky-300 hover:bg-sky-500/20 hover:border-sky-500/40 transition mr-1.5">📥 {{ __('tickets_download_one') }}</a>
                                 <a href="{{ route('tickets.show', $t->id) }}" class="inline-flex items-center rounded-lg border border-slate-600 bg-slate-800/80 px-2.5 py-1.5 text-xs font-medium text-slate-200 hover:bg-amber-500/20 hover:border-amber-500/40 transition">{{ __('tickets_edit') }}</a>
                             </td>
                         </tr>
@@ -126,10 +125,10 @@
             </table>
         </div>
 
-        <div id="selected-bar" class="mx-4 mb-4 hidden flex flex-wrap items-center gap-3 rounded-xl border border-violet-500/40 bg-violet-500/10 px-4 py-3">
-            <span id="selected-count" class="text-sm font-medium text-violet-200">0 tiket dipilih.</span>
-            <button type="submit" name="export_selected" class="inline-flex items-center gap-2 rounded-lg bg-violet-500 px-4 py-2 text-sm font-semibold text-white hover:bg-violet-600 transition">📥 Unduh Tiket Terpilih</button>
-            <button type="button" id="clear-selection" class="text-xs text-slate-400 hover:text-slate-200 underline">Batalkan pilihan</button>
+        <div id="selected-bar" class="mx-4 mb-4 hidden flex flex-wrap items-center gap-3 rounded-xl border border-violet-500/40 bg-violet-500/10 px-4 py-3" data-count-template="{{ e(__('tickets_selected_count', ['n' => ':n'])) }}" data-alert-msg="{{ e(__('tickets_select_min_alert')) }}">
+            <span id="selected-count" class="text-sm font-medium text-violet-200"></span>
+            <button type="submit" name="export_selected" class="inline-flex items-center gap-2 rounded-lg bg-violet-500 px-4 py-2 text-sm font-semibold text-white hover:bg-violet-600 transition">📥 {{ __('tickets_download_selected_btn') }}</button>
+            <button type="button" id="clear-selection" class="text-xs text-slate-400 hover:text-slate-200 underline">{{ __('tickets_clear_selection') }}</button>
         </div>
         </form>
 
@@ -145,7 +144,8 @@
                 function updateBar() {
                     var n = 0;
                     for (var i = 0; i < checkboxes.length; i++) if (checkboxes[i].checked) n++;
-                    if (countEl) countEl.textContent = n + ' tiket dipilih untuk di-download.';
+                    var template = bar ? bar.getAttribute('data-count-template') : '';
+                    if (countEl && template) countEl.textContent = template.replace(':n', n);
                     if (bar) bar.classList.toggle('hidden', n === 0);
                     if (selectAll) selectAll.checked = n > 0 && n === checkboxes.length;
                 }
@@ -166,15 +166,17 @@
                     for (var k = 0; k < checkboxes.length; k++) if (checkboxes[k].checked) n++;
                     if (n === 0) {
                         e.preventDefault();
-                        alert('Pilih minimal satu tiket (centang di kolom Pilih), lalu klik Unduh Tiket Terpilih.');
+                        var msg = bar ? bar.getAttribute('data-alert-msg') : '';
+                        if (msg) alert(msg);
                     }
                 });
+                updateBar();
             })();
         </script>
 
         @if($tickets->hasPages())
             <div class="px-4 py-3 border-t border-slate-700/80 flex items-center justify-between gap-4 text-sm text-slate-400 bg-slate-800/30">
-                <span>Halaman <span class="font-medium text-slate-200">{{ $tickets->currentPage() }}</span> dari {{ $tickets->lastPage() }} <span class="text-slate-500">({{ $tickets->total() }} tiket)</span></span>
+                <span>{{ __('tickets_page_info', ['current' => $tickets->currentPage(), 'last' => $tickets->lastPage(), 'total' => $tickets->total()]) }}</span>
                 <div class="flex items-center gap-2">
                     @if($tickets->onFirstPage())
                         <span class="px-3 py-2 rounded-lg border border-slate-600 bg-slate-800 text-slate-500 opacity-40">{{ __('tickets_prev') }}</span>

@@ -18,7 +18,11 @@
     <style>
         body { font-family: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif; }
         #sidebar-mobile-backdrop { transition: opacity 0.2s ease-out; }
-        #sidebar { transition: transform 0.2s ease-out; }
+        #sidebar {
+            transition: transform 0.2s ease-out;
+            height: 100vh;
+            height: 100dvh;
+        }
         @media (max-width: 767px) {
             #sidebar.sidebar-closed { transform: translateX(-100%); }
             #sidebar.sidebar-open { transform: translateX(0); }
@@ -29,14 +33,13 @@
     </style>
 </head>
 <body class="min-h-screen bg-slate-950 text-slate-100">
-    @include('partials.locale-switcher')
     {{-- Backdrop untuk mobile sidebar (hanya tampil saat open) --}}
     <div id="sidebar-mobile-backdrop" class="fixed inset-0 bg-black/60 z-40 opacity-0 pointer-events-none md:pointer-events-none md:opacity-0 md:hidden" aria-hidden="true"></div>
 
     <div class="flex min-h-screen">
-        <aside id="sidebar" class="sidebar-closed fixed inset-y-0 left-0 z-50 w-72 bg-slate-900/95 border-r border-slate-800/60 flex flex-col md:relative md:inset-auto md:w-60 md:bg-slate-900/80"
+        <aside id="sidebar" class="sidebar-closed fixed inset-y-0 left-0 z-50 w-72 bg-slate-900/95 border-r border-slate-800/60 flex flex-col min-h-0 md:sticky md:top-0 md:self-start md:w-60 md:bg-slate-900/80"
             aria-label="{{ __('nav_dashboard') }}">
-            <div class="px-4 py-5 border-b border-slate-800/60">
+            <div class="shrink-0 px-4 py-5 border-b border-slate-800/60">
                 <a href="{{ route('dashboard') }}" class="flex flex-col items-center gap-2 text-center">
                     <img src="{{ asset('images/ozj-logo.png') }}" alt="OZJ - AI Signal Intelligence" class="h-14 w-auto object-contain" />
                     <div class="flex flex-col">
@@ -45,7 +48,7 @@
                     </div>
                 </a>
             </div>
-            <nav class="flex-1 px-3 py-4 space-y-1 text-sm">
+            <nav class="flex-1 min-h-0 overflow-y-auto px-3 py-4 space-y-1 text-sm">
                 <a href="{{ route('dashboard') }}" class="flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium {{ request()->routeIs('dashboard') ? 'bg-slate-800 text-amber-300' : 'text-slate-300 hover:bg-white/10' }}">
                     <span class="h-1.5 w-1.5 rounded-full bg-emerald-400"></span> {{ __('nav_dashboard') }}
                 </a>
@@ -59,7 +62,7 @@
                     <span class="h-1.5 w-1.5 rounded-full bg-violet-400"></span> {{ __('nav_settings') }}
                 </a>
             </nav>
-            <div class="px-4 py-4 border-t border-slate-800/60 text-xs text-slate-400 flex items-center justify-between gap-2">
+            <div class="shrink-0 px-4 py-4 border-t border-slate-800/60 text-xs text-slate-400 flex items-center justify-between gap-2">
                 <div class="flex items-center gap-2 min-w-0">
                     <div class="h-7 w-7 rounded-full bg-slate-800 flex items-center justify-center text-[10px] font-semibold shrink-0">
                         {{ strtoupper(substr(auth()->user()->name ?? 'U', 0, 1)) }}
@@ -87,12 +90,16 @@
                     <img src="{{ asset('images/ozj-logo.png') }}" alt="OZJ" class="h-9 w-auto object-contain" />
                     <span class="text-sm font-semibold truncate">{{ __('app_name') }}</span>
                 </a>
-                <form method="POST" action="{{ route('logout') }}" class="shrink-0">@csrf
-                    <button type="submit" class="text-[11px] text-rose-300 hover:text-rose-200">{{ __('logout') }}</button>
-                </form>
+                <div class="flex items-center gap-2 shrink-0">
+                    @include('partials.locale-switcher')
+                    <form method="POST" action="{{ route('logout') }}">@csrf
+                        <button type="submit" class="text-[11px] text-rose-300 hover:text-rose-200">{{ __('logout') }}</button>
+                    </form>
+                </div>
             </header>
-            <div class="hidden md:flex items-center justify-end gap-3 pl-4 pr-24 py-2 border-b border-slate-800/60 bg-slate-950/50">
+            <div class="hidden md:flex items-center justify-end gap-3 pl-4 pr-6 py-2 border-b border-slate-800/60 bg-slate-950/50">
                 <span class="text-[11px] text-slate-400 truncate max-w-[12rem]">{{ auth()->user()->email }}</span>
+                @include('partials.locale-switcher')
                 <form method="POST" action="{{ route('logout') }}">@csrf
                     <button type="submit" class="text-xs text-rose-300 hover:text-rose-200 font-medium px-2.5 py-1 rounded-md hover:bg-rose-500/10 transition">{{ __('logout') }}</button>
                 </form>

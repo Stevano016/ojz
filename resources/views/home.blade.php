@@ -9,9 +9,12 @@
     <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600,700" rel="stylesheet" />
     <style>body { font-family: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif; }</style>
 </head>
-<body class="min-h-screen bg-slate-950 flex flex-col items-center justify-center px-4 py-8">
-    @include('partials.locale-switcher')
-    <div class="w-full max-w-md space-y-6">
+<body class="min-h-screen bg-slate-950 text-slate-100">
+    <div class="min-h-screen flex flex-col items-center justify-center px-4 py-8 relative">
+        <div class="absolute top-4 right-4">
+            @include('partials.locale-switcher')
+        </div>
+        <div class="w-full max-w-md space-y-6">
         <div class="text-center">
             <img src="{{ asset('images/ozj-logo.png') }}" alt="OZJ - AI Signal Intelligence" class="h-24 w-auto object-contain mx-auto mb-4" />
             <h1 class="text-2xl font-semibold text-slate-100">{{ __('home_title') }}</h1>
@@ -32,6 +35,7 @@
                 </a>
             </div>
         </form>
+        </div>
     </div>
 </body>
 </html>
