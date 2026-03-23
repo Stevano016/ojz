@@ -61,18 +61,18 @@ class TicketsRekapExport implements FromArray, WithTitle, WithColumnWidths, With
             ->get();
 
         $rows = [
-            ['Rekap Tiket OZJ'],
+            ['OZJ Ticket Summary'],
             [],
-            ['Ringkasan'],
-            ['Total Tiket', $total],
+            ['Overview'],
+            ['Total Tickets', $total],
             ['Open', $open],
             ['In Progress', $inProgress],
             ['Resolved', $resolved],
             ['Closed', $closed],
-            ['Rata-rata Skor Urgensi Hukum', $avgScore],
+            ['Average Legal Urgency Score', $avgScore],
             [],
-            ['Level Sinyal (Mikro / Meso / Makro)'],
-            ['Level', 'Jumlah'],
+            ['Signal Level (Micro / Meso / Macro)'],
+            ['Level', 'Count'],
         ];
 
         foreach ($byLevel as $row) {
@@ -81,9 +81,9 @@ class TicketsRekapExport implements FromArray, WithTitle, WithColumnWidths, With
         $this->levelDataEndRow = 12 + $byLevel->count();
 
         $rows[] = [];
-        $rows[] = ['Eskalasi'];
+        $rows[] = ['Escalation'];
         $this->eskalasiHeaderRow = $this->levelDataEndRow + 2;
-        $rows[] = ['Status Eskalasi', 'Jumlah'];
+        $rows[] = ['Escalation Status', 'Count'];
         $this->eskalasiSubRow = $this->eskalasiHeaderRow + 1;
         foreach ($byUrgency as $row) {
             $rows[] = [$row->status_eskalasi ?? '—', $row->total];
@@ -91,9 +91,9 @@ class TicketsRekapExport implements FromArray, WithTitle, WithColumnWidths, With
         $this->eskalasiDataEndRow = $this->eskalasiSubRow + $byUrgency->count();
 
         $rows[] = [];
-        $rows[] = ['Kategori Sinyal'];
+        $rows[] = ['Signal Category'];
         $this->kategoriHeaderRow = $this->eskalasiDataEndRow + 2;
-        $rows[] = ['Kategori', 'Jumlah'];
+        $rows[] = ['Category', 'Count'];
         $this->kategoriSubRow = $this->kategoriHeaderRow + 1;
         foreach ($byCategory as $row) {
             $rows[] = [$row->kategori_sinyal ?? '—', $row->total];
@@ -148,35 +148,35 @@ class TicketsRekapExport implements FromArray, WithTitle, WithColumnWidths, With
                 ],
                 'alignment' => ['horizontal' => Alignment::HORIZONTAL_LEFT, 'vertical' => Alignment::VERTICAL_CENTER],
             ],
-            // Ringkasan
+            // Overview
             "A{$this->summaryHeaderRow}:B{$this->summaryHeaderRow}" => $sectionFill,
             "A4:B{$this->summaryDataEndRow}" => array_merge($borderThin, [
                 'alignment' => ['vertical' => Alignment::VERTICAL_CENTER, 'wrapText' => false],
             ]),
         ];
 
-        // Level Sinyal
+        // Signal Level
         $styles["A{$this->levelHeaderRow}:B{$this->levelHeaderRow}"] = $sectionFill;
         $styles["A{$this->levelSubRow}:B{$this->levelSubRow}"] = array_merge($headerFill, $borderThin);
         if ($this->levelDataEndRow >= 13) {
             $styles["A13:B{$this->levelDataEndRow}"] = $borderThin;
         }
 
-        // Eskalasi
+        // Escalation
         if ($this->eskalasiHeaderRow > 0) {
             $styles["A{$this->eskalasiHeaderRow}:B{$this->eskalasiHeaderRow}"] = $sectionFill;
             $styles["A{$this->eskalasiSubRow}:B{$this->eskalasiSubRow}"] = array_merge($headerFill, $borderThin);
             if ($this->eskalasiDataEndRow > $this->eskalasiSubRow) {
-                $styles["A" . ($this->eskalasiSubRow + 1) . ":B{$this->eskalasiDataEndRow}"] = $borderThin;
+                $styles['A'.($this->eskalasiSubRow + 1).":B{$this->eskalasiDataEndRow}"] = $borderThin;
             }
         }
 
-        // Kategori
+        // Signal Category
         if ($this->kategoriHeaderRow > 0) {
             $styles["A{$this->kategoriHeaderRow}:B{$this->kategoriHeaderRow}"] = $sectionFill;
             $styles["A{$this->kategoriSubRow}:B{$this->kategoriSubRow}"] = array_merge($headerFill, $borderThin);
             if ($this->kategoriDataEndRow > $this->kategoriSubRow) {
-                $styles["A" . ($this->kategoriSubRow + 1) . ":B{$this->kategoriDataEndRow}"] = $borderThin;
+                $styles['A'.($this->kategoriSubRow + 1).":B{$this->kategoriDataEndRow}"] = $borderThin;
             }
         }
 
@@ -185,6 +185,6 @@ class TicketsRekapExport implements FromArray, WithTitle, WithColumnWidths, With
 
     public function title(): string
     {
-        return 'Rekap';
+        return 'Summary';
     }
 }
